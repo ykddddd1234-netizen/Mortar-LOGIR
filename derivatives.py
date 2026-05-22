@@ -10,7 +10,7 @@ from constants import (
 )
 
 
-def derivatives(state):
+def derivatives(state, A, sigma, Mc):
 
     x, y, z, vx, vy, vz = state
 
@@ -33,8 +33,8 @@ def derivatives(state):
 
     M = V / a
 
-    Cd = 0.13 + 0.03 * np.exp(
-        -((M - 0.82)/0.10)**2
+    Cd = 0.13 + A * np.exp(
+        -((M - Mc)/sigma)**2
     )
 
     # =========================
