@@ -2,19 +2,22 @@ import numpy as np
 
 from constants import (
     g,
-    rho0,
     S,
     m,
-    H,
-    a
+)
+
+from aero import get_cd
+from atmosphere import (
+    get_density,
+    get_speed_of_sound
 )
 
 
-def derivatives(state, A, sigma, Mc):
+def derivatives(state, cd_table):
 
     x, y, z, vx, vy, vz = state
 
-    rho = rho0 * np.exp(-z / H)
+    rho = get_density(z)
 
 
     # =========================
@@ -31,11 +34,11 @@ def derivatives(state, A, sigma, Mc):
     # Drag Coefficient
     # =========================
 
+    a = get_speed_of_sound(z)
+
     M = V / a
 
-    Cd = 0.13 + A * np.exp(
-        -((M - Mc)/sigma)**2
-    )
+    Cd = get_cd(M, cd_table)
 
     # =========================
     # Drag Magnitude

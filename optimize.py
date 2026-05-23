@@ -6,6 +6,8 @@ from scipy.optimize import minimize
 from main import simulate
 from cases import cases
 
+from aero import mach_table
+
 
 # =========================================
 # Objective Function
@@ -13,23 +15,78 @@ from cases import cases
 
 def objective(params):
 
-    A, sigma, Mc = params
+    (
+        Cd_076,
+        Cd_078,
+        Cd_080,
+        Cd_082,
+        Cd_084
+    ) = params
+
+
+    # =========================================
+    # Aero Table
+    # =========================================
+
+    cd_table = np.array([
+
+        # ---------------------------------
+        # Subsonic
+        # ---------------------------------
+
+        0.130,  # M = 0.00
+        0.130,  # M = 0.30
+        0.130,  # M = 0.50
+        0.130,  # M = 0.70
+
+        # ---------------------------------
+        # Transonic
+        # ---------------------------------
+
+        0.130,   # M = 0.74
+
+        Cd_076,  # M = 0.76
+        Cd_078,  # M = 0.78
+        Cd_080,  # M = 0.80
+        Cd_082,  # M = 0.82
+        Cd_084,  # M = 0.84
+
+        0.130,   # M = 0.86
+        0.130,   # M = 0.88
+        0.130,   # M = 0.90
+
+        # ---------------------------------
+        # Supersonic
+        # ---------------------------------
+
+        0.130,   # M = 1.00
+        0.130,   # M = 1.10
+        0.130    # M = 1.20
+    ])
+
 
     total_error = 0.0
+
+
+    # =========================================
+    # Case Loop
+    # =========================================
 
     for case in cases:
 
         result = simulate(
+
             v0=case["v0"],
+
             theta_mil=case["theta_mil"],
-            A=A,
-            sigma = sigma,
-            Mc = Mc
+
+            cd_table=cd_table
         )
 
-        # =========================
+
+        # =========================================
         # Relative Errors
-        # =========================
+        # =========================================
 
         range_error = (
             (result["range"] - case["range"])
@@ -42,7 +99,10 @@ def objective(params):
         )
 
         angle_error = (
-            (result["impact_angle"] - case["impact_angle"])
+            (
+                result["impact_angle"]
+                - case["impact_angle"]
+            )
             / case["impact_angle"]
         )
 
@@ -59,9 +119,10 @@ def objective(params):
             / case["hmax"]
         )
 
-        # =========================
-        # Weighted Sum
-        # =========================
+
+        # =========================================
+        # Weighted Error
+        # =========================================
 
         total_error += (
 
@@ -85,9 +146,11 @@ def objective(params):
 
 initial_guess = [
 
-    0.03,   # A
-    0.06,   # sigma
-    0.83    # Mc
+    0.13,  # M = 0.76
+    0.1682,  # M = 0.78
+    0.2032,  # M = 0.80
+    0.1877,  # M = 0.82
+    0.13   # M = 0.84
 ]
 
 
@@ -105,25 +168,91 @@ result = minimize(
 
     bounds=[
 
-        (0.0, 0.08),   # A
-        (0.04, 0.12),   # sigma
-        (0.78, 0.90)   # Mc
-    ]
+        (0.130, 0.160),  # M = 0.76
+
+        (0.140, 0.180),  # M = 0.78
+
+        (0.160, 0.220),  # M = 0.80
+
+        (0.140, 0.200),  # M = 0.82
+
+        (0.130, 0.180)   # M = 0.84
+    ],
+
+    options={
+
+        "maxiter": 30
+    }
 )
+
+
+# =========================================
+# Optimized Parameters
+# =========================================
+
+(
+    Cd_076_opt,
+    Cd_078_opt,
+    Cd_080_opt,
+    Cd_082_opt,
+    Cd_084_opt
+) = result.x
+
+
+# =========================================
+# Final Aero Table
+# =========================================
+
+cd_table = np.array([
+
+    # ---------------------------------
+    # Subsonic
+    # ---------------------------------
+
+    0.130,
+    0.130,
+    0.130,
+    0.130,
+
+    # ---------------------------------
+    # Transonic
+    # ---------------------------------
+
+    0.130,
+
+    Cd_076_opt,
+    Cd_078_opt,
+    Cd_080_opt,
+    Cd_082_opt,
+    Cd_084_opt,
+
+    0.140,
+    0.132,
+    0.130,
+
+    # ---------------------------------
+    # Supersonic
+    # ---------------------------------
+
+    0.130,
+    0.130,
+    0.130
+])
+
 
 # =========================================
 # Results
 # =========================================
 
-A_opt, sigma_opt, Mc_opt = result.x
+print("\n===== Optimization Result =====\n")
 
-print("\n===== Optimization Result =====")
+print("Cd @ M=0.76 :", Cd_076_opt)
+print("Cd @ M=0.78 :", Cd_078_opt)
+print("Cd @ M=0.80 :", Cd_080_opt)
+print("Cd @ M=0.82 :", Cd_082_opt)
+print("Cd @ M=0.84 :", Cd_084_opt)
 
-print("A      :", A_opt)
-print("sigma  :", sigma_opt)
-print("Mc     :", Mc_opt)
-
-print("error  :", result.fun)
+print("\nTotal Error :", result.fun)
 
 print("\n")
 
@@ -137,11 +266,10 @@ for case in cases:
     sim = simulate(
 
         v0=case["v0"],
+
         theta_mil=case["theta_mil"],
 
-        A=A_opt,
-        sigma=sigma_opt,
-        Mc=Mc_opt
+        cd_table=cd_table
     )
 
     print("====================================")
@@ -185,24 +313,29 @@ for case in cases:
 
     print()
 
+
 # =========================================
 # Cd(M) Plot
 # =========================================
 
-M = np.linspace(0, 1.2, 500)
-
-Cd = 0.13 + A_opt * np.exp(
-    -((M - Mc_opt)/sigma_opt)**2
-)
-
 plt.figure(figsize=(8,5))
 
-plt.plot(M, Cd)
+plt.plot(
+
+    mach_table,
+
+    cd_table,
+
+    marker='o'
+)
+
+plt.ticklabel_format(style='plain')
 
 plt.xlabel("Mach Number")
+
 plt.ylabel("Cd")
 
-plt.title("Optimized Cd(M)")
+plt.title("Optimized Cd(M) Aero Table")
 
 plt.grid(True)
 

@@ -15,7 +15,7 @@ from units import (
 # =========================
 
 
-def simulate(v0, theta_mil, A, sigma, Mc):
+def simulate(v0, theta_mil, cd_table):
 
     theta = mil_to_rad(theta_mil)
 
@@ -30,8 +30,10 @@ def simulate(v0, theta_mil, A, sigma, Mc):
     vz0 = v0 * np.sin(theta)
 
 
+    # =========================
     # Initial State Vector
     # [x, y, z, vx, vy, vz]
+    # =========================
 
     state = np.array([
         0.0,
@@ -47,11 +49,11 @@ def simulate(v0, theta_mil, A, sigma, Mc):
     # Simulation Settings
     # =========================
 
-    dt = 0.01
-
-    trajectory = []
+    dt = 0.02
 
     time = 0.0
+
+    max_z = 0.0
 
 
     # =========================
@@ -60,79 +62,75 @@ def simulate(v0, theta_mil, A, sigma, Mc):
 
     while state[2] >= 0:
 
-        trajectory.append(state.copy())
+        # Maximum altitude tracking
+
+        if state[2] > max_z:
+
+            max_z = state[2]
 
         state = rk4_step(
             state,
             dt,
-            lambda s: derivatives(s, A, sigma, Mc)
+            lambda s: derivatives(s, cd_table)
         )
 
         time += dt
 
 
-    trajectory = np.array(trajectory)
-
-
     # =========================
-    # Extract States
+    # Final State
     # =========================
 
-    x = trajectory[:, 0]
-    y = trajectory[:, 1]
-    z = trajectory[:, 2]
+    x_final = state[0]
+    y_final = state[1]
+    z_final = state[2]
 
-    vx = trajectory[:, 3]
-    vy = trajectory[:, 4]
-    vz = trajectory[:, 5]
+    vx_final = state[3]
+    vy_final = state[4]
+    vz_final = state[5]
 
 
     # =========================
     # Velocity Magnitude
     # =========================
 
-    V = np.sqrt(
-        vx**2 +
-        vy**2 +
-        vz**2
+    V_final = np.sqrt(
+        vx_final**2 +
+        vy_final**2 +
+        vz_final**2
     )
 
-    # =========================
-    # impact_angle
-    # =========================
 
-    vx_impact = vx[-1]
-    vy_impact = vy[-1]
-    vz_impact = vz[-1]
+    # =========================
+    # Impact Angle
+    # =========================
 
     V_horizontal = np.sqrt(
-        vx_impact**2 +
-        vy_impact**2
+        vx_final**2 +
+        vy_final**2
     )
 
     impact_angle = np.degrees(
         np.arctan2(
-            abs(vz_impact),
+            abs(vz_final),
             V_horizontal
         )
     )
 
+
+    # =========================
+    # Return
+    # =========================
+
     return {
-        "range": x[-1],
+
+        "range": x_final,
+
         "tof": time,
-        "hmax": np.max(z),
-        "impact_velocity": V[-1],
+
+        "hmax": max_z,
+
+        "impact_velocity": V_final,
+
         "impact_angle": deg_to_mil(impact_angle)
     }
-
-if __name__ == "__main__":
-
-    result = simulate(
-        v0=259.3,
-        theta_mil=1511,
-        A=0.04,
-        sigma=0.10,
-        Mc=0.85
-    )
-
-    print(result)

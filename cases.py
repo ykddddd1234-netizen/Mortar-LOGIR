@@ -39,6 +39,42 @@ cases = [
     },
 
     {
+        "name": "charge_4",
+        "v0": 259.3,
+        "theta_mil": 1229,
+
+        "range": 3200,
+        "tof": 44.1,
+        "impact_angle": 1309,
+        "impact_velocity": 203,
+        "hmax": 2380,
+    },
+
+    {
+        "name": "charge_4",
+        "v0": 259.3,
+        "theta_mil": 824,
+
+        "range": 4825,
+        "tof": 34.5,
+        "impact_angle": 971,
+        "impact_velocity": 191,
+        "hmax": 1461,
+    },
+
+    {
+        "name": "charge_4",
+        "v0": 259.3,
+        "theta_mil": 1095,
+
+        "range": 4000,
+        "tof": 41.6,
+        "impact_angle": 1205,
+        "impact_velocity": 199,
+        "hmax": 2119,
+    },
+
+    {
         "name": "charge_5",
         "v0": 288.2,
         "theta_mil": 1358,
