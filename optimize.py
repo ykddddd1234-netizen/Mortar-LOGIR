@@ -12,6 +12,14 @@ from aero import (
     base_cd_table
 )
 
+iteration = 0
+
+last_error = None
+
+best_error = np.inf
+
+best_params = None
+
 
 # =========================================
 # Transonic Hump
@@ -263,9 +271,12 @@ def objective(params):
     # Regularization
     # =====================================
 
-    lambda_smooth = 100.0
+    lambda_smooth = 1
 
-    total_error += (
+    fit_error = total_error
+
+
+    regularization = (
 
         lambda_smooth
 
@@ -273,6 +284,30 @@ def objective(params):
 
         smoothness
     )
+
+
+    total_error += regularization
+
+
+    print(
+
+        "Fit Error :",
+
+        fit_error
+    )
+
+    print(
+
+        "Regularization :",
+
+        regularization
+    )
+
+
+    global last_error
+
+    last_error = total_error
+
 
     return total_error
 
@@ -322,7 +357,7 @@ for _ in range(16):
 
     bounds.append(
 
-        (-0.005, 0.005)
+        (-0.02, 0.02)
     )
 
 
@@ -330,15 +365,55 @@ for _ in range(16):
 
 bounds.extend([
 
-    (-0.010, 0.010),  # A3
+    (-0.05, 0.05),  # A3
 
-    (-0.010, 0.010),  # A4
+    (-0.05, 0.05),  # A4
 
-    (-0.010, 0.010),  # A5
+    (-0.05, 0.05),  # A5
 
-    (-0.010, 0.010)   # A6
+    (-0.05, 0.05)   # A6
 ])
 
+# =========================================
+# callback
+# =========================================
+
+def callback(xk):
+
+    global iteration
+
+    global best_error
+
+    global best_params
+
+    iteration += 1
+
+
+    if last_error < best_error:
+
+        best_error = last_error
+
+        best_params = xk.copy()
+
+        np.save(
+
+            "best_params.npy",
+
+            best_params
+        )
+
+
+    print(
+
+        f"Iteration : {iteration}"
+    )
+
+    print(
+
+        f"Current Error : {last_error}"
+    )
+
+    print()
 
 # =========================================
 # Optimization
@@ -354,9 +429,11 @@ result = minimize(
 
     bounds=bounds,
 
+    callback=callback,
+
     options={
 
-        "maxiter": 200
+        "maxiter": 10
     }
 )
 

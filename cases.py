@@ -201,9 +201,9 @@ cases = [
     {
         "name": "charge_6",
         "v0": 320,
-        "theta_mil": 6325,
+        "theta_mil": 800,
 
-        "range": 800,
+        "range": 6325,
         "tof": 39.5,
         "impact_angle": 998,
         "impact_velocity": 208,

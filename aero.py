@@ -73,13 +73,16 @@ base_cd_table = np.array([
 # Cd(M)
 # =========================================
 
-def get_cd(M, cd_table):
+def build_cd_interp(cd_table):
 
-    interp = PchipInterpolator(
+    return PchipInterpolator(
 
         mach_table,
 
         cd_table
     )
+
+
+def get_cd(M, interp):
 
     return float(interp(M))

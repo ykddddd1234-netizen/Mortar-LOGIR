@@ -11,6 +11,8 @@ from units import (
     mil_to_rad,
 )
 
+from aero import build_cd_interp
+
 
 # =========================================
 # Simulation
@@ -30,6 +32,8 @@ def simulate(
     # =====================================
     # Launch Angles
     # =====================================
+
+    interp = build_cd_interp(cd_table)
 
     theta = mil_to_rad(theta_mil)
 
@@ -70,7 +74,7 @@ def simulate(
     # Simulation Settings
     # =====================================
 
-    dt = 0.02
+    dt = 0.05
 
     time = 0.0
 
@@ -119,7 +123,7 @@ def simulate(
 
             dt,
 
-            lambda s: derivatives(s, cd_table)
+            lambda s: derivatives(s, interp)
         )
 
         time += dt
