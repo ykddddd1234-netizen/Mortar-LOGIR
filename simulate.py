@@ -1,20 +1,15 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from rk4 import rk4_step
+
 from derivatives import derivatives
 
 from units import (
+
     deg_to_mil,
+
     mil_to_rad,
 )
-
-from aero import (
-    mach_table,
-    base_cd_table
-)
-
-from scipy.interpolate import PchipInterpolator
 
 
 # =========================================
@@ -75,7 +70,7 @@ def simulate(
     # Simulation Settings
     # =====================================
 
-    dt = 0.01
+    dt = 0.02
 
     time = 0.0
 
@@ -115,7 +110,7 @@ def simulate(
 
 
         # =================================
-        # RK4 Integration
+        # RK4 Step
         # =================================
 
         state = rk4_step(
@@ -135,10 +130,6 @@ def simulate(
     # =====================================
 
     x_final = state[0]
-
-    y_final = state[1]
-
-    z_final = state[2]
 
     vx_final = state[3]
 
@@ -207,220 +198,7 @@ def simulate(
 
     if return_trajectory:
 
-        trajectory = np.array(trajectory)
-
-        result["trajectory"] = trajectory
+        result["trajectory"] = np.array(trajectory)
 
 
     return result
-
-
-# =========================================
-# User Input
-# =========================================
-
-v0 = float(
-
-    input("Muzzle Velocity (m/s): ")
-)
-
-theta_mil = float(
-
-    input("Elevation Angle (mil): ")
-)
-
-
-# =========================================
-# Run Simulation
-# =========================================
-
-result = simulate(
-
-    v0=v0,
-
-    theta_mil=theta_mil,
-
-    cd_table=base_cd_table,
-
-    return_trajectory=True
-)
-
-
-# =========================================
-# Print Results
-# =========================================
-
-print("\n====================================")
-print("Simulation Result")
-print("====================================\n")
-
-print(
-
-    "Range            :",
-
-    round(result["range"], 3),
-
-    "m"
-)
-
-print(
-
-    "Time of Flight   :",
-
-    round(result["tof"], 3),
-
-    "s"
-)
-
-print(
-
-    "Maximum Altitude :",
-
-    round(result["hmax"], 3),
-
-    "m"
-)
-
-print(
-
-    "Impact Velocity  :",
-
-    round(result["impact_velocity"], 3),
-
-    "m/s"
-)
-
-print(
-
-    "Impact Angle     :",
-
-    round(result["impact_angle"], 3),
-
-    "mil"
-)
-
-print()
-
-
-# =========================================
-# Trajectory Extraction
-# =========================================
-
-traj = result["trajectory"]
-
-x = traj[:,0]
-
-z = traj[:,2]
-
-
-# =========================================
-# Save Trajectory Data
-# =========================================
-
-trajectory_data = np.column_stack((x, z))
-
-np.savetxt(
-
-    "trajectory.txt",
-
-    trajectory_data,
-
-    header="x(m) z(m)",
-
-    fmt="%.6f"
-)
-
-
-# =========================================
-# Plot Trajectory
-# =========================================
-
-plt.figure(figsize=(10,5))
-
-plt.plot(x, z)
-
-plt.xlabel("Range (m)")
-
-plt.ylabel("Altitude (m)")
-
-plt.title("Mortar Trajectory")
-
-plt.grid(True)
-
-plt.savefig("trajectory.png")
-
-plt.show()
-
-
-# =========================================
-# Done
-# =========================================
-
-print("Saved Files:")
-
-print(" - trajectory.txt")
-
-print(" - trajectory.png")
-
-# =========================================
-# Cd(M) Plot
-# =========================================
-
-interp = PchipInterpolator(
-
-    mach_table,
-
-    base_cd_table
-)
-
-M_plot = np.linspace(
-
-    mach_table[0],
-
-    mach_table[-1],
-
-    500
-)
-
-Cd_plot = interp(M_plot)
-
-
-plt.figure(figsize=(8,5))
-
-# Smooth curve
-
-plt.plot(
-
-    M_plot,
-
-    Cd_plot,
-
-    label="PCHIP Interpolation"
-)
-
-# Table points
-
-plt.scatter(
-
-    mach_table,
-
-    base_cd_table,
-
-    zorder=3,
-
-    label="Cd Table"
-)
-
-plt.xlabel("Mach Number")
-
-plt.ylabel("Cd")
-
-plt.title("Base Cd(M)")
-
-plt.grid(True)
-
-plt.legend()
-
-plt.savefig("cd_table.png")
-
-plt.show()

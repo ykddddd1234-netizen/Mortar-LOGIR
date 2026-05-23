@@ -1,7 +1,20 @@
 # cases.py
 
 cases = [
-    
+
+    # Charge_3   
+    {
+        "name": "charge_3",
+        "v0": 220.4,
+        "theta_mil": 1504,
+
+        "range": 700,
+        "tof": 40.7,
+        "impact_angle": 1520,
+        "impact_velocity": 183,
+        "hmax": 2029,
+    },
+
     {
         "name": "charge_3",
         "v0": 220.4,
@@ -14,29 +27,77 @@ cases = [
         "hmax": 1848,
     },
 
+    {
+        "name": "charge_3",
+        "v0": 220.4,
+        "theta_mil": 908,
 
+        "range": 3600,
+        "tof": 32.0,
+        "impact_angle": 1027,
+        "impact_velocity": 172,
+        "hmax": 1258,
+    },
+
+    # Charge_4
     {
         "name": "charge_4",
         "v0": 262,
-        "theta_mil": 1336,
+        "theta_mil": 1506,
 
-        "range": 2400,
-        "tof": 45.6,
-        "impact_angle": 1391,
-        "impact_velocity": 205,
-        "hmax": 2542,
+        "range": 900,
+        "tof": 46.9,
+        "impact_angle": 1524,
+        "impact_velocity": 207,
+        "hmax": 2696,
     },
 
     {
         "name": "charge_4",
         "v0": 262,
-        "theta_mil": 1463,
+        "theta_mil": 1441,
 
-        "range": 1300,
-        "tof": 46.7,
-        "impact_angle": 1490,
-        "impact_velocity": 207,
-        "hmax": 2670,
+        "range": 1500,
+        "tof": 46.6,
+        "impact_angle": 1473,
+        "impact_velocity": 206,
+        "hmax": 2654,
+    },
+
+    {
+        "name": "charge_4",
+        "v0": 262,
+        "theta_mil": 1360,
+
+        "range": 2200,
+        "tof": 45.8,
+        "impact_angle": 1410,
+        "impact_velocity": 205,
+        "hmax": 2573,
+    },
+
+    {
+        "name": "charge_4",
+        "v0": 262,
+        "theta_mil": 1258,
+
+        "range": 3000,
+        "tof": 44.5,
+        "impact_angle": 1331,
+        "impact_velocity": 203,
+        "hmax": 2428,
+    },
+
+    {
+        "name": "charge_4",
+        "v0": 262,
+        "theta_mil": 1004,
+
+        "range": 4400,
+        "tof": 39.5,
+        "impact_angle": 1131,
+        "impact_velocity": 196,
+        "hmax": 1912,
     },
 
     {
@@ -51,105 +112,71 @@ cases = [
         "hmax": 1518,
     },
 
+    # Charge_5
     {
-        "name": "charge_4",
-        "v0": 262,
-        "theta_mil": 1229,
+        "name": "charge_5",
+        "v0": 288.2,
+        "theta_mil": 1507,
 
-        "range": 3200,
-        "tof": 44.1,
-        "impact_angle": 1309,
-        "impact_velocity": 203,
-        "hmax": 2380,
+        "range": 1000,
+        "tof": 50.5,
+        "impact_angle": 1529,
+        "impact_velocity": 216,
+        "hmax": 3115,
     },
 
     {
-        "name": "charge_4",
-        "v0": 262,
-        "theta_mil": 824,
+        "name": "charge_5",
+        "v0": 288.2,
+        "theta_mil": 1302,
 
-        "range": 4825,
-        "tof": 34.5,
-        "impact_angle": 971,
-        "impact_velocity": 191,
-        "hmax": 1461,
+        "range": 3000,
+        "tof": 48.5,
+        "impact_angle": 1378,
+        "impact_velocity": 213,
+        "hmax": 2884,
     },
 
     {
-        "name": "charge_4",
-        "v0": 262,
-        "theta_mil": 1095,
+        "name": "charge_5",
+        "v0": 288.2,
+        "theta_mil": 1173,
 
         "range": 4000,
-        "tof": 41.6,
-        "impact_angle": 1205,
+        "tof": 46.3,
+        "impact_angle": 1286,
+        "impact_velocity": 210,
+        "hmax": 2633,
+    },
+
+    {
+        "name": "charge_5",
+        "v0": 288.2,
+        "theta_mil": 891,
+
+        "range": 5300,
+        "tof": 39.3,
+        "impact_angle": 1065,
         "impact_velocity": 199,
-        "hmax": 2119,
+        "hmax": 1895,
     },
-
+    
+    # Charge_6
     {
-        "name": "charge_5",
-        "v0": 288.2,
-        "theta_mil": 1358,
-
-        "range": 2500,
-        "tof": 49.3,
-        "impact_angle": 1419,
-        "impact_velocity": 214,
-        "hmax": 2969,
-    },
-
-    {
-        "name": "charge_5",
-        "v0": 288.2,
-        "theta_mil": 1488,
+        "name": "charge_6",
+        "v0": 320,
+        "theta_mil": 1505,
 
         "range": 1200,
-        "tof": 50.4,
-        "impact_angle": 1515,
-        "impact_velocity": 216,
-        "hmax": 3103,
-    },
-
-    {
-        "name": "charge_5",
-        "v0": 288.2,
-        "theta_mil": 1034,
-
-        "range": 4800,
-        "tof": 43.2,
-        "impact_angle": 1182,
-        "impact_velocity": 205,
-        "hmax": 2294,
+        "tof": 54.8,
+        "impact_angle": 1529,
+        "impact_velocity": 231,
+        "hmax": 3672,
     },
 
     {
         "name": "charge_6",
-        "v0": 320.0,
-        "theta_mil": 1128,
-
-        "range": 5000,
-        "tof": 49.3,
-        "impact_angle": 1261,
-        "impact_velocity": 222,
-        "hmax": 2983,
-    },
-
-    {
-        "name": "charge_6",
-        "v0": 320.0,
-        "theta_mil": 1439,
-
-        "range": 2000,
-        "tof": 54.4,
-        "impact_angle": 1481,
-        "impact_velocity": 230,
-        "hmax": 3613,
-    },
-
-    {
-        "name": "charge_6",
-        "v0": 320.0,
+        "v0": 320,
         "theta_mil": 1302,
 
         "range": 3500,
@@ -159,4 +186,27 @@ cases = [
         "hmax": 3401,
     },
 
+    {
+        "name": "charge_6",
+        "v0": 320,
+        "theta_mil": 1193,
+
+        "range": 4500,
+        "tof": 50.7,
+        "impact_angle": 1307,
+        "impact_velocity": 225,
+        "hmax": 3155,
+    },
+
+    {
+        "name": "charge_6",
+        "v0": 320,
+        "theta_mil": 6325,
+
+        "range": 800,
+        "tof": 39.5,
+        "impact_angle": 998,
+        "impact_velocity": 208,
+        "hmax": 1921,
+    }   
 ]
