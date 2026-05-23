@@ -9,45 +9,66 @@ from units import (
     mil_to_rad,
 )
 
+from aero import base_cd_table
 
-# =========================
+
+# =========================================
 # Simulation
-# =========================
+# =========================================
 
+def simulate(
 
-def simulate(v0, theta_mil, cd_table):
+    v0,
+
+    theta_mil,
+
+    cd_table,
+
+    return_trajectory=False
+):
+
+    # =====================================
+    # Launch Angles
+    # =====================================
 
     theta = mil_to_rad(theta_mil)
 
     psi_mil = 0
+
     psi = mil_to_rad(psi_mil)
 
 
-    # Velocity Components
+    # =====================================
+    # Initial Velocity Components
+    # =====================================
 
     vx0 = v0 * np.cos(theta) * np.cos(psi)
+
     vy0 = v0 * np.cos(theta) * np.sin(psi)
+
     vz0 = v0 * np.sin(theta)
 
 
-    # =========================
+    # =====================================
     # Initial State Vector
     # [x, y, z, vx, vy, vz]
-    # =========================
+    # =====================================
 
     state = np.array([
+
         0.0,
         0.0,
         0.0,
+
         vx0,
         vy0,
         vz0
     ])
 
 
-    # =========================
+    # =====================================
     # Simulation Settings
-    # =========================
+    # =====================================
 
     dt = 0.02
 
@@ -56,73 +77,112 @@ def simulate(v0, theta_mil, cd_table):
     max_z = 0.0
 
 
-    # =========================
+    # =====================================
+    # Trajectory Storage
+    # =====================================
+
+    trajectory = []
+
+
+    # =====================================
     # Simulation Loop
-    # =========================
+    # =====================================
 
     while state[2] >= 0:
 
-        # Maximum altitude tracking
+
+        # =================================
+        # Save Trajectory
+        # =================================
+
+        if return_trajectory:
+
+            trajectory.append(state.copy())
+
+
+        # =================================
+        # Maximum Altitude
+        # =================================
 
         if state[2] > max_z:
 
             max_z = state[2]
 
+
+        # =================================
+        # RK4 Integration
+        # =================================
+
         state = rk4_step(
+
             state,
+
             dt,
+
             lambda s: derivatives(s, cd_table)
         )
 
         time += dt
 
 
-    # =========================
+    # =====================================
     # Final State
-    # =========================
+    # =====================================
 
     x_final = state[0]
+
     y_final = state[1]
+
     z_final = state[2]
 
     vx_final = state[3]
+
     vy_final = state[4]
+
     vz_final = state[5]
 
 
-    # =========================
-    # Velocity Magnitude
-    # =========================
+    # =====================================
+    # Final Velocity Magnitude
+    # =====================================
 
     V_final = np.sqrt(
+
         vx_final**2 +
+
         vy_final**2 +
+
         vz_final**2
     )
 
 
-    # =========================
+    # =====================================
     # Impact Angle
-    # =========================
+    # =====================================
 
     V_horizontal = np.sqrt(
+
         vx_final**2 +
+
         vy_final**2
     )
 
     impact_angle = np.degrees(
+
         np.arctan2(
+
             abs(vz_final),
+
             V_horizontal
         )
     )
 
 
-    # =========================
-    # Return
-    # =========================
+    # =====================================
+    # Result Dictionary
+    # =====================================
 
-    return {
+    result = {
 
         "range": x_final,
 
@@ -134,3 +194,165 @@ def simulate(v0, theta_mil, cd_table):
 
         "impact_angle": deg_to_mil(impact_angle)
     }
+
+
+    # =====================================
+    # Add Trajectory
+    # =====================================
+
+    if return_trajectory:
+
+        trajectory = np.array(trajectory)
+
+        result["trajectory"] = trajectory
+
+
+    return result
+
+
+# =========================================
+# User Input
+# =========================================
+
+v0 = float(
+
+    input("Muzzle Velocity (m/s): ")
+)
+
+theta_mil = float(
+
+    input("Elevation Angle (mil): ")
+)
+
+
+# =========================================
+# Run Simulation
+# =========================================
+
+result = simulate(
+
+    v0=v0,
+
+    theta_mil=theta_mil,
+
+    cd_table=base_cd_table,
+
+    return_trajectory=True
+)
+
+
+# =========================================
+# Print Results
+# =========================================
+
+print("\n====================================")
+print("Simulation Result")
+print("====================================\n")
+
+print(
+
+    "Range            :",
+
+    round(result["range"], 3),
+
+    "m"
+)
+
+print(
+
+    "Time of Flight   :",
+
+    round(result["tof"], 3),
+
+    "s"
+)
+
+print(
+
+    "Maximum Altitude :",
+
+    round(result["hmax"], 3),
+
+    "m"
+)
+
+print(
+
+    "Impact Velocity  :",
+
+    round(result["impact_velocity"], 3),
+
+    "m/s"
+)
+
+print(
+
+    "Impact Angle     :",
+
+    round(result["impact_angle"], 3),
+
+    "mil"
+)
+
+print()
+
+
+# =========================================
+# Trajectory Extraction
+# =========================================
+
+traj = result["trajectory"]
+
+x = traj[:,0]
+
+z = traj[:,2]
+
+
+# =========================================
+# Save Trajectory Data
+# =========================================
+
+trajectory_data = np.column_stack((x, z))
+
+np.savetxt(
+
+    "trajectory.txt",
+
+    trajectory_data,
+
+    header="x(m) z(m)",
+
+    fmt="%.6f"
+)
+
+
+# =========================================
+# Plot Trajectory
+# =========================================
+
+plt.figure(figsize=(10,5))
+
+plt.plot(x, z)
+
+plt.xlabel("Range (m)")
+
+plt.ylabel("Altitude (m)")
+
+plt.title("Mortar Trajectory")
+
+plt.grid(True)
+
+plt.savefig("trajectory.png")
+
+plt.show()
+
+
+# =========================================
+# Done
+# =========================================
+
+print("Saved Files:")
+
+print(" - trajectory.txt")
+
+print(" - trajectory.png")

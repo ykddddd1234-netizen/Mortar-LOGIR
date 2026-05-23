@@ -1,10 +1,23 @@
 # cases.py
 
 cases = [
+    
+    {
+        "name": "charge_3",
+        "v0": 220.4,
+        "theta_mil": 1275,
+
+        "range": 2200,
+        "tof": 38.8,
+        "impact_angle": 1335,
+        "impact_velocity": 180,
+        "hmax": 1848,
+    },
+
 
     {
         "name": "charge_4",
-        "v0": 259.3,
+        "v0": 262,
         "theta_mil": 1336,
 
         "range": 2400,
@@ -16,7 +29,7 @@ cases = [
 
     {
         "name": "charge_4",
-        "v0": 259.3,
+        "v0": 262,
         "theta_mil": 1463,
 
         "range": 1300,
@@ -28,7 +41,7 @@ cases = [
 
     {
         "name": "charge_4",
-        "v0": 259.3,
+        "v0": 262,
         "theta_mil": 846,
 
         "range": 4800,
@@ -40,7 +53,7 @@ cases = [
 
     {
         "name": "charge_4",
-        "v0": 259.3,
+        "v0": 262,
         "theta_mil": 1229,
 
         "range": 3200,
@@ -52,7 +65,7 @@ cases = [
 
     {
         "name": "charge_4",
-        "v0": 259.3,
+        "v0": 262,
         "theta_mil": 824,
 
         "range": 4825,
@@ -64,7 +77,7 @@ cases = [
 
     {
         "name": "charge_4",
-        "v0": 259.3,
+        "v0": 262,
         "theta_mil": 1095,
 
         "range": 4000,
