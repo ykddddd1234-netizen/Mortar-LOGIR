@@ -10,11 +10,72 @@ from units import (
 )
 
 from aero import (
+
     mach_table,
-    base_cd_table
+
+    build_cd_interp
 )
 
-from scipy.interpolate import PchipInterpolator
+from optimized_cd_tables import (
+
+    cd_table_3,
+
+    cd_table_4,
+
+    cd_table_5,
+
+    cd_table_6
+)
+
+
+# =========================================
+# Charge-dependent Settings
+# =========================================
+
+charge_settings = {
+
+    1: {
+
+        "v0": 130.8,
+
+        "cd_table": cd_table_3
+    },
+
+    2: {
+
+        "v0": 183.0,
+
+        "cd_table": cd_table_3
+    },
+
+    3: {
+
+        "v0": 220.4,
+
+        "cd_table": cd_table_3
+    },
+
+    4: {
+
+        "v0": 262.0,
+
+        "cd_table": cd_table_4
+    },
+
+    5: {
+
+        "v0": 288.2,
+
+        "cd_table": cd_table_5
+    },
+
+    6: {
+
+        "v0": 320.0,
+
+        "cd_table": cd_table_6
+    }
+}
 
 
 # =========================================
@@ -31,6 +92,13 @@ def simulate(
 
     return_trajectory=False
 ):
+
+    # =====================================
+    # Build Interpolator
+    # =====================================
+
+    interp = build_cd_interp(cd_table)
+
 
     # =====================================
     # Launch Angles
@@ -56,7 +124,6 @@ def simulate(
 
     # =====================================
     # Initial State Vector
-    # [x, y, z, vx, vy, vz]
     # =====================================
 
     state = np.array([
@@ -124,7 +191,7 @@ def simulate(
 
             dt,
 
-            lambda s: derivatives(s, cd_table)
+            lambda s: derivatives(s, interp)
         )
 
         time += dt
@@ -135,10 +202,6 @@ def simulate(
     # =====================================
 
     x_final = state[0]
-
-    y_final = state[1]
-
-    z_final = state[2]
 
     vx_final = state[3]
 
@@ -219,15 +282,42 @@ def simulate(
 # User Input
 # =========================================
 
-v0 = float(
+charge = int(
 
-    input("Muzzle Velocity (m/s): ")
+    input(
+
+        "Charge Number (1~6): "
+    )
 )
 
 theta_mil = float(
 
-    input("Elevation Angle (mil): ")
+    input(
+
+        "Elevation Angle (mil): "
+    )
 )
+
+
+# =========================================
+# Charge Validation
+# =========================================
+
+if charge not in charge_settings:
+
+    raise ValueError(
+
+        "Charge must be between 1 and 6."
+    )
+
+
+# =========================================
+# Load Charge-dependent Data
+# =========================================
+
+v0 = charge_settings[charge]["v0"]
+
+cd_table = charge_settings[charge]["cd_table"]
 
 
 # =========================================
@@ -240,7 +330,7 @@ result = simulate(
 
     theta_mil=theta_mil,
 
-    cd_table=base_cd_table,
+    cd_table=cd_table,
 
     return_trajectory=True
 )
@@ -253,6 +343,22 @@ result = simulate(
 print("\n====================================")
 print("Simulation Result")
 print("====================================\n")
+
+print(
+
+    "Charge           :",
+
+    charge
+)
+
+print(
+
+    "Muzzle Velocity  :",
+
+    round(v0, 3),
+
+    "m/s"
+)
 
 print(
 
@@ -343,13 +449,21 @@ plt.xlabel("Range (m)")
 
 plt.ylabel("Altitude (m)")
 
-plt.title("Mortar Trajectory")
+plt.title(
+
+    f"Mortar Trajectory - Charge {charge}"
+)
 
 plt.grid(True)
 
-plt.savefig("trajectory.png")
+plt.savefig(
 
-plt.show()
+    "trajectory.png",
+
+    dpi=300
+)
+
+plt.close()
 
 
 # =========================================
@@ -361,66 +475,3 @@ print("Saved Files:")
 print(" - trajectory.txt")
 
 print(" - trajectory.png")
-
-# =========================================
-# Cd(M) Plot
-# =========================================
-
-interp = PchipInterpolator(
-
-    mach_table,
-
-    base_cd_table
-)
-
-M_plot = np.linspace(
-
-    mach_table[0],
-
-    mach_table[-1],
-
-    500
-)
-
-Cd_plot = interp(M_plot)
-
-
-plt.figure(figsize=(8,5))
-
-# Smooth curve
-
-plt.plot(
-
-    M_plot,
-
-    Cd_plot,
-
-    label="PCHIP Interpolation"
-)
-
-# Table points
-
-plt.scatter(
-
-    mach_table,
-
-    base_cd_table,
-
-    zorder=3,
-
-    label="Cd Table"
-)
-
-plt.xlabel("Mach Number")
-
-plt.ylabel("Cd")
-
-plt.title("Base Cd(M)")
-
-plt.grid(True)
-
-plt.legend()
-
-plt.savefig("cd_table.png")
-
-plt.show()

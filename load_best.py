@@ -1,12 +1,23 @@
+# load_best.py
+
 import numpy as np
-
-from cd_builder import build_charge_cd_table
-
-from aero import mach_table
-
 import matplotlib.pyplot as plt
 
 from scipy.interpolate import PchipInterpolator
+
+from cd_builder import (
+
+    build_charge_cd_table,
+
+    hump
+)
+
+from aero import (
+
+    mach_table,
+
+    base_cd_table
+)
 
 
 # =========================================
@@ -35,7 +46,21 @@ A6 = params[19]
 
 
 # =========================================
-# Build Tables
+# Optimized Base Cd
+# =========================================
+
+optimized_base_cd = (
+
+    base_cd_table
+
+    +
+
+    global_delta
+)
+
+
+# =========================================
+# Build Charge-dependent Cd Tables
 # =========================================
 
 cd_table_3 = build_charge_cd_table(
@@ -68,8 +93,10 @@ cd_table_6 = build_charge_cd_table(
 
 
 # =========================================
-# Print
+# Print Parameters
 # =========================================
+
+print("\n===== Optimized Parameters =====\n")
 
 print("A3 :", A3)
 
@@ -81,32 +108,174 @@ print("A6 :", A6)
 
 print()
 
-print("Charge 3")
 
-print(cd_table_3)
+# =========================================
+# Print Optimized Base Cd
+# =========================================
+
+print("===== Optimized Base Cd =====\n")
+
+for M, Cd in zip(
+
+    mach_table,
+
+    optimized_base_cd
+):
+
+    print(
+
+        f"Mach {M:.2f} : {Cd:.6f}"
+    )
 
 print()
-
-print("Charge 4")
-
-print(cd_table_4)
-
-print()
-
-print("Charge 5")
-
-print(cd_table_5)
-
-print()
-
-print("Charge 6")
-
-print(cd_table_6)
 
 
 # =========================================
-# Plot
+# Save Tables as Python File
 # =========================================
+
+with open(
+
+    "optimized_cd_tables.py",
+
+    "w",
+
+    encoding="utf-8"
+) as f:
+
+
+    # =====================================
+    # Header
+    # =====================================
+
+    f.write(
+
+        "# =========================================\n"
+    )
+
+    f.write(
+
+        "# Optimized Charge-dependent Cd Tables\n"
+    )
+
+    f.write(
+
+        "# =========================================\n\n"
+    )
+
+
+    # =====================================
+    # Mach Table
+    # =====================================
+
+    f.write(
+
+        "mach_table = "
+
+        +
+
+        repr([float(x) for x in mach_table])
+
+        +
+
+        "\n\n"
+    )
+
+
+    # =====================================
+    # Optimized Base Cd
+    # =====================================
+
+    f.write(
+
+        "optimized_base_cd = "
+
+        +
+
+        repr([float(x) for x in optimized_base_cd])
+
+        +
+
+        "\n\n"
+    )
+
+
+    # =====================================
+    # Charge-dependent Cd Tables
+    # =====================================
+
+    f.write(
+
+        "cd_table_3 = "
+
+        +
+
+        repr([float(x) for x in cd_table_3])
+
+        +
+
+        "\n\n"
+    )
+
+
+    f.write(
+
+        "cd_table_4 = "
+
+        +
+
+        repr([float(x) for x in cd_table_4])
+
+        +
+
+        "\n\n"
+    )
+
+
+    f.write(
+
+        "cd_table_5 = "
+
+        +
+
+        repr([float(x) for x in cd_table_5])
+
+        +
+
+        "\n\n"
+    )
+
+
+    f.write(
+
+        "cd_table_6 = "
+
+        +
+
+        repr([float(x) for x in cd_table_6])
+
+        +
+
+        "\n\n"
+    )
+
+
+print(
+
+    "Saved : optimized_cd_tables.py"
+)
+
+
+# =========================================
+# Interpolators
+# =========================================
+
+interp_base = PchipInterpolator(
+
+    mach_table,
+
+    optimized_base_cd
+)
 
 interp3 = PchipInterpolator(
 
@@ -137,6 +306,10 @@ interp6 = PchipInterpolator(
 )
 
 
+# =========================================
+# Plot Range
+# =========================================
+
 M_plot = np.linspace(
 
     0.0,
@@ -147,7 +320,34 @@ M_plot = np.linspace(
 )
 
 
+# =========================================
+# Plot
+# =========================================
+
 plt.figure(figsize=(10,6))
+
+
+# =====================================
+# Optimized Base
+# =====================================
+
+plt.plot(
+
+    M_plot,
+
+    interp_base(M_plot),
+
+    linewidth=3,
+
+    linestyle="--",
+
+    label="Optimized Base Cd"
+)
+
+
+# =====================================
+# Charge-dependent Curves
+# =====================================
 
 plt.plot(
 
@@ -185,8 +385,46 @@ plt.plot(
     label="Charge 6"
 )
 
-plt.legend()
+
+# =====================================
+# Labels
+# =====================================
+
+plt.xlabel("Mach Number")
+
+plt.ylabel("Cd")
+
+plt.title("Optimized Charge-dependent Cd(M)")
+
+
+# =====================================
+# Grid / Legend
+# =====================================
 
 plt.grid(True)
 
-plt.show()
+plt.legend()
+
+
+# =====================================
+# Save Plot
+# =====================================
+
+plt.savefig(
+
+    "cd_table.png",
+
+    dpi=300
+)
+
+print(
+
+    "Saved : cd_table.png"
+)
+
+
+# =====================================
+# Close Figure
+# =====================================
+
+plt.close("all")
