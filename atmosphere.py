@@ -1,22 +1,20 @@
 import numpy as np
 
 from constants import (
-    rho0,
-    H,
     gamma,
-    R
+    R,
+    g
 )
 
-
 # =========================================
-# Density
+# Sea Level Standard Atmosphere
 # =========================================
 
-def get_density(z):
+T0 = 288.15        # K
 
-    return rho0 * np.exp(
-        -z / H
-    )
+P0 = 101325.0      # Pa
+
+L = 0.0065         # K/m
 
 
 # =========================================
@@ -25,10 +23,37 @@ def get_density(z):
 
 def get_temperature(z):
 
-    T0 = 288.15       # K
-    lapse = 0.0065    # K/m
+    return T0 - L * z
 
-    return T0 - lapse * z
+
+# =========================================
+# Pressure
+# =========================================
+
+def get_pressure(z):
+
+    T = get_temperature(z)
+
+    exponent = g / (R * L)
+
+    return P0 * (
+
+        T / T0
+
+    ) ** exponent
+
+
+# =========================================
+# Density
+# =========================================
+
+def get_density(z):
+
+    T = get_temperature(z)
+
+    P = get_pressure(z)
+
+    return P / (R * T)
 
 
 # =========================================
@@ -40,5 +65,6 @@ def get_speed_of_sound(z):
     T = get_temperature(z)
 
     return np.sqrt(
+
         gamma * R * T
     )
