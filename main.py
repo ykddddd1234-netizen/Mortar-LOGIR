@@ -13,7 +13,13 @@ from aero import (
 
     mach_table,
 
-    build_cd_interp
+    build_cd_interp,
+
+    get_cd
+)
+
+from atmosphere import (
+    get_speed_of_sound
 )
 
 from optimized_cd_tables import (
@@ -43,7 +49,7 @@ charge_settings = {
 
     2: {
 
-        "v0": 183.0,
+        "v0": 179.9,
 
         "cd_table": cd_table_3
     },
@@ -169,7 +175,71 @@ def simulate(
 
         if return_trajectory:
 
-            trajectory.append(state.copy())
+            vx = state[3]
+
+            vy = state[4]
+
+            vz = state[5]
+
+
+            # =============================
+            # Velocity Magnitude
+            # =============================
+
+            V = np.sqrt(
+
+                vx**2 +
+
+                vy**2 +
+
+                vz**2
+            )
+
+
+            # =============================
+            # Current Altitude
+            # =============================
+
+            z = state[2]
+
+
+            # =============================
+            # Speed of Sound
+            # =============================
+
+            a = get_speed_of_sound(z)
+
+
+            # =============================
+            # Mach Number
+            # =============================
+
+            M = V / a
+
+
+            # =============================
+            # Current Cd
+            # =============================
+
+            Cd = get_cd(M, interp)
+
+
+            # =============================
+            # Save
+            # =============================
+
+            trajectory.append([
+
+                time,
+
+                state[0],   # x
+                state[1],   # y
+                state[2],   # z
+
+                V,
+                M,
+                Cd
+            ])
 
 
         # =================================
@@ -414,16 +484,41 @@ print()
 
 traj = result["trajectory"]
 
-x = traj[:,0]
+time_hist = traj[:,0]
 
-z = traj[:,2]
+x = traj[:,1]
+
+y = traj[:,2]
+
+z = traj[:,3]
+
+V_hist = traj[:,4]
+
+M_hist = traj[:,5]
+
+Cd_hist = traj[:,6]
 
 
 # =========================================
 # Save Trajectory Data
 # =========================================
 
-trajectory_data = np.column_stack((x, z))
+trajectory_data = np.column_stack((
+
+    time_hist,
+
+    x,
+
+    y,
+
+    z,
+
+    V_hist,
+
+    M_hist,
+
+    Cd_hist
+))
 
 np.savetxt(
 
@@ -431,7 +526,16 @@ np.savetxt(
 
     trajectory_data,
 
-    header="x(m) z(m)",
+    header=(
+
+        "time(s) "
+        "x(m) "
+        "y(m) "
+        "z(m) "
+        "V(m/s) "
+        "Mach "
+        "Cd"
+    ),
 
     fmt="%.6f"
 )
