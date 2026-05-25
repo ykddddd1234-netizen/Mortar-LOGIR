@@ -1,3 +1,5 @@
+# simulate.py
+
 import numpy as np
 
 from rk4 import rk4_step
@@ -8,7 +10,7 @@ from units import (
 
     deg_to_mil,
 
-    mil_to_rad,
+    mil_to_rad
 )
 
 
@@ -48,8 +50,15 @@ def simulate(
 
 
     # =====================================
+    # Initial Activation
+    # =====================================
+
+    a0 = 0.0
+
+
+    # =====================================
     # Initial State Vector
-    # [x, y, z, vx, vy, vz]
+    # [x, y, z, vx, vy, vz, a]
     # =====================================
 
     state = np.array([
@@ -60,7 +69,9 @@ def simulate(
 
         vx0,
         vy0,
-        vz0
+        vz0,
+
+        a0
     ])
 
 
@@ -68,7 +79,7 @@ def simulate(
     # Simulation Settings
     # =====================================
 
-    dt = 0.2
+    dt = 0.05
 
     time = 0.0
 
@@ -165,7 +176,7 @@ def simulate(
     # Result Dictionary
     # =====================================
 
-    return {
+    result = {
 
         "range": x_final,
 
@@ -175,8 +186,8 @@ def simulate(
 
         "impact_velocity": V_final,
 
-        "impact_angle": deg_to_mil(
-
-            impact_angle
-        )
+        "impact_angle": deg_to_mil(impact_angle)
     }
+
+
+    return result

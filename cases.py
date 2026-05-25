@@ -229,7 +229,7 @@ cases = [
     {
         "name": "charge_5",
 
-        "v0": 286.5,
+        "v0": 286,
         "theta_mil": 1507,
 
         "range": 1000,
@@ -251,7 +251,7 @@ cases = [
     {
         "name": "charge_5",
 
-        "v0": 286.5,
+        "v0": 286,
         "theta_mil": 1302,
 
         "range": 3000,
@@ -273,7 +273,7 @@ cases = [
     {
         "name": "charge_5",
 
-        "v0": 286.5,
+        "v0": 286,
         "theta_mil": 1173,
 
         "range": 4000,
@@ -295,7 +295,7 @@ cases = [
     {
         "name": "charge_5",
 
-        "v0": 286.5,
+        "v0": 286,
         "theta_mil": 891,
 
         "range": 5300,

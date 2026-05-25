@@ -46,7 +46,9 @@ def vector_to_params(x):
 
         "Mc": x[3],
 
-        "k": x[4]
+        "k": x[4],
+
+        "tau": x[5]
 
     }
 
@@ -119,11 +121,11 @@ def compute_nominal_error(
 
     return (
 
-        5.0 * e_range**2 +
+        15.0 * e_range**2 +
 
         2.0 * e_tof**2 +
 
-        1.0 * e_hmax**2 +
+        5.0 * e_hmax**2 +
 
         1.0 * e_v**2 +
 
@@ -458,15 +460,17 @@ def callback(xk):
 
 x0 = np.array([
 
-    0.139361,     # C0
+    0.14,       # C0
 
-    -0.021663,     # C1
+    -0.02,      # C1
 
-    0.147010,     # A
+    0.15,       # A
 
-    0.963081,      # Mc
+    0.95,       # Mc
 
-    20.289424,      # k
+    30,         # k
+
+    1.0         # tau
 ])
 
 
@@ -484,7 +488,9 @@ bounds = [
 
     (0.80, 1.00),     # Mc
 
-    (1.0, 50.0),      # k
+    (1.0, 100),      # k
+
+    (0.01, 10.0)       # tau
 ]
 
 
@@ -506,7 +512,7 @@ result = minimize(
 
     options={
 
-        "maxiter": 10
+        "maxiter": 25
     }
 )
 
