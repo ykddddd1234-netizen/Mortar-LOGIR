@@ -1,429 +1,502 @@
+# optimize.py
+
 import numpy as np
-import matplotlib.pyplot as plt
 
 from scipy.optimize import minimize
-from scipy.interpolate import PchipInterpolator
 
 from simulate import simulate
+
 from cases import cases
 
-from aero import (
-    mach_table,
-    base_cd_table
+from met import (
+
+    reset_met,
+
+    set_uniform_density_ratio,
+
+    set_uniform_temp_ratio
 )
 
-iteration = 0
+# Initial Setting
 
-last_error = None
+last_loss = None
 
-best_error = np.inf
+# =========================================================
+# Optimization Flags
+# =========================================================
 
-best_params = None
+USE_DENSITY = False
 
-
-# =========================================
-# Transonic Hump
-# =========================================
-
-def hump(M):
-
-    return np.exp(
-        -((M - 0.82) / 0.06)**2
-    )
+USE_TEMPERATURE = True
 
 
-# =========================================
-# Build Cd Table
-# =========================================
+# =========================================================
+# Parameter Conversion
+# =========================================================
 
-def build_cd_table(
+def vector_to_params(x):
 
-    global_delta,
+    return {
 
-    charge_scales
-):
+        "C0": x[0],
 
-    cd_table = np.zeros_like(base_cd_table)
+        "C1": x[1],
 
-    for i, M in enumerate(mach_table):
+        "A": x[2],
 
-        cd_table[i] = (
+        "Mc": x[3],
 
-            base_cd_table[i]
+        "k": x[4]
 
-            +
-
-            global_delta[i]
-
-            +
-
-            hump(M)
-        )
-
-    return cd_table
-
-
-# =========================================
-# Build Charge Cd Table
-# =========================================
-
-def build_charge_cd_table(
-
-    global_delta,
-
-    charge_scale
-):
-
-    cd_table = np.zeros_like(base_cd_table)
-
-    for i, M in enumerate(mach_table):
-
-        cd_table[i] = (
-
-            base_cd_table[i]
-
-            +
-
-            global_delta[i]
-
-            +
-
-            charge_scale * hump(M)
-        )
-
-    return cd_table
-
-
-# =========================================
-# Objective Function
-# =========================================
-
-def objective(params):
-
-    # =====================================
-    # Parameter Split
-    # =====================================
-
-    global_delta = params[:16]
-
-    A3 = params[16]
-
-    A4 = params[17]
-
-    A5 = params[18]
-
-    A6 = params[19]
-
-
-    # =====================================
-    # Charge Scales
-    # =====================================
-
-    charge_scale_map = {
-
-        "charge_3": A3,
-
-        "charge_4": A4,
-
-        "charge_5": A5,
-
-        "charge_6": A6
     }
 
 
+# =========================================================
+# Nominal Error
+# =========================================================
+
+def compute_nominal_error(
+
+    result,
+
+    case
+):
+
+    e_range = (
+
+        (
+            result["range"]
+            - case["range"]
+        )
+
+        / case["range"]
+    )
+
+
+    e_tof = (
+
+        (
+            result["tof"]
+            - case["tof"]
+        )
+
+        / case["tof"]
+    )
+
+
+    e_hmax = (
+
+        (
+            result["hmax"]
+            - case["hmax"]
+        )
+
+        / case["hmax"]
+    )
+
+
+    e_v = (
+
+        (
+            result["impact_velocity"]
+            - case["impact_velocity"]
+        )
+
+        / case["impact_velocity"]
+    )
+
+
+    e_angle = (
+
+        (
+            result["impact_angle"]
+            - case["impact_angle"]
+        )
+
+        / case["impact_angle"]
+    )
+
+
+    return (
+
+        5.0 * e_range**2 +
+
+        2.0 * e_tof**2 +
+
+        1.0 * e_hmax**2 +
+
+        1.0 * e_v**2 +
+
+        1.0 * e_angle**2
+    )
+
+
+# =========================================================
+# Correction Error
+# =========================================================
+
+def compute_correction_error(
+
+    delta_sim,
+
+    delta_target
+):
+
+    scale = max(
+
+        abs(delta_target),
+
+        1.0
+    )
+
+    return (
+
+        (
+            delta_sim
+            - delta_target
+        )
+
+        / scale
+    )**2
+
+
+# =========================================================
+# Objective Function
+# =========================================================
+
+def objective(x):
+
+    params = vector_to_params(x)
+
     total_error = 0.0
 
-    smoothness = 0.0
 
-
-    # =====================================
-    # Smoothness Penalty
-    # =====================================
-
-    for i in range(len(global_delta) - 1):
-
-        smoothness += (
-
-            global_delta[i+1]
-
-            -
-
-            global_delta[i]
-
-        )**2
-
-
-    # =====================================
-    # Case Loop
-    # =====================================
+    # =====================================================
+    # Loop Cases
+    # =====================================================
 
     for case in cases:
 
-        charge_name = case["name"]
 
-        charge_scale = charge_scale_map[charge_name]
+        # =================================================
+        # Nominal Atmosphere
+        # =================================================
 
+        reset_met()
 
-        cd_table = build_charge_cd_table(
+        nominal = simulate(
 
-            global_delta,
+            case["v0"],
 
-            charge_scale
+            case["theta_mil"],
+
+            params
         )
 
 
-        result = simulate(
+        # =================================================
+        # Nominal Error
+        # =================================================
 
-            v0=case["v0"],
+        total_error += compute_nominal_error(
 
-            theta_mil=case["theta_mil"],
+            nominal,
 
-            cd_table=cd_table
+            case
         )
 
 
-        # =================================
-        # Relative Errors
-        # =================================
+        # =================================================
+        # Density Corrections
+        # =================================================
 
-        range_error = (
-
-            result["range"]
-
-            -
-
-            case["range"]
-
-        ) / case["range"]
+        if USE_DENSITY:
 
 
-        tof_error = (
+            # =============================================
+            # Density +1%
+            # =============================================
 
-            result["tof"]
+            set_uniform_density_ratio(
 
-            -
+                1.01
+            )
 
-            case["tof"]
+            rho_plus = simulate(
 
-        ) / case["tof"]
+                case["v0"],
 
+                case["theta_mil"],
 
-        angle_error = (
-
-            result["impact_angle"]
-
-            -
-
-            case["impact_angle"]
-
-        ) / case["impact_angle"]
+                params
+            )
 
 
-        velocity_error = (
+            # =============================================
+            # Density -1%
+            # =============================================
 
-            result["impact_velocity"]
+            set_uniform_density_ratio(
 
-            -
+                0.99
+            )
 
-            case["impact_velocity"]
+            rho_minus = simulate(
 
-        ) / case["impact_velocity"]
+                case["v0"],
 
+                case["theta_mil"],
 
-        hmax_error = (
-
-            result["hmax"]
-
-            -
-
-            case["hmax"]
-
-        ) / case["hmax"]
+                params
+            )
 
 
-        # =================================
-        # Weighted Error
-        # =================================
+            # =============================================
+            # Reset
+            # =============================================
 
-        total_error += (
-
-            5.0 * range_error**2
-
-            +
-
-            2.0 * tof_error**2
-
-            +
-
-            2.0 * angle_error**2
-
-            +
-
-            1.0 * velocity_error**2
-
-            +
-
-            1.0 * hmax_error**2
-        )
+            reset_met()
 
 
-    # =====================================
-    # Regularization
-    # =====================================
+            # =============================================
+            # Corrections
+            # =============================================
 
-    lambda_smooth = 1
+            delta_rho_plus = (
 
-    fit_error = total_error
+                rho_plus["range"]
 
+                - nominal["range"]
+            )
 
-    regularization = (
+            delta_rho_minus = (
 
-        lambda_smooth
+                rho_minus["range"]
 
-        *
-
-        smoothness
-    )
-
-
-    total_error += regularization
+                - nominal["range"]
+            )
 
 
-    print(
+            # =============================================
+            # Error
+            # =============================================
 
-        "Fit Error :",
+            total_error += (
 
-        fit_error
-    )
+                0.5 *
 
-    print(
+                compute_correction_error(
 
-        "Regularization :",
+                    delta_rho_plus,
 
-        regularization
-    )
+                    case["density_plus"]
+                )
+            )
 
 
-    global last_error
+            total_error += (
 
-    last_error = total_error
+                0.5 *
 
+                compute_correction_error(
+
+                    delta_rho_minus,
+
+                    case["density_minus"]
+                )
+            )
+
+
+        # =================================================
+        # Temperature Corrections
+        # =================================================
+
+        if USE_TEMPERATURE:
+
+
+            # =============================================
+            # Temp +1%
+            # =============================================
+
+            set_uniform_temp_ratio(
+
+                1.01
+            )
+
+            temp_plus = simulate(
+
+                case["v0"],
+
+                case["theta_mil"],
+
+                params
+            )
+
+
+            # =============================================
+            # Temp -1%
+            # =============================================
+
+            set_uniform_temp_ratio(
+
+                0.99
+            )
+
+            temp_minus = simulate(
+
+                case["v0"],
+
+                case["theta_mil"],
+
+                params
+            )
+
+
+            # =============================================
+            # Reset
+            # =============================================
+
+            reset_met()
+
+
+            # =============================================
+            # Corrections
+            # =============================================
+
+            delta_temp_plus = (
+
+                temp_plus["range"]
+
+                - nominal["range"]
+            )
+
+            delta_temp_minus = (
+
+                temp_minus["range"]
+
+                - nominal["range"]
+            )
+
+
+            # =============================================
+            # Error
+            # =============================================
+
+            total_error += (
+
+                1.0 *
+
+                compute_correction_error(
+
+                    delta_temp_plus,
+
+                    case["temp_plus"]
+                )
+            )
+
+
+            total_error += (
+
+                1.0 *
+
+                compute_correction_error(
+
+                    delta_temp_minus,
+
+                    case["temp_minus"]
+                )
+            )
+
+    global last_loss
+
+    last_loss = total_error
 
     return total_error
 
 
-# =========================================
-# Initial Guess
-# =========================================
+# =========================================================
+# Callback
+# =========================================================
 
-global_delta0 = np.zeros(16)
+iteration = 0
 
-A3_0 = 0.000
-
-A4_0 = 0.000
-
-A5_0 = 0.000
-
-A6_0 = 0.000
-
-
-initial_guess = np.concatenate([
-
-    global_delta0,
-
-    [
-
-        A3_0,
-
-        A4_0,
-
-        A5_0,
-
-        A6_0
-    ]
-])
-
-
-# =========================================
-# Bounds
-# =========================================
-
-bounds = []
-
-
-# Global Delta Bounds
-
-for _ in range(16):
-
-    bounds.append(
-
-        (-0.02, 0.02)
-    )
-
-
-# Charge Scale Bounds
-
-bounds.extend([
-
-    (-0.05, 0.05),  # A3
-
-    (-0.05, 0.05),  # A4
-
-    (-0.05, 0.05),  # A5
-
-    (-0.05, 0.05)   # A6
-])
-
-# =========================================
-# callback
-# =========================================
 
 def callback(xk):
 
     global iteration
 
-    global best_error
+    global last_loss
 
-    global best_params
 
     iteration += 1
 
+    params = vector_to_params(xk)
 
-    if last_error < best_error:
 
-        best_error = last_error
+    print("\n================================================")
+    print(f"ITERATION : {iteration}")
+    print("================================================")
 
-        best_params = xk.copy()
 
-        np.save(
+    print(
 
-            "best_params.npy",
+        f"\nLOSS : {last_loss:.8f}\n"
+    )
 
-            best_params
+
+    for key, value in params.items():
+
+        print(
+
+            f"{key:>4} : {value:.6f}"
         )
 
 
-    print(
+# =========================================================
+# Initial Guess
+# =========================================================
 
-        f"Iteration : {iteration}"
-    )
+x0 = np.array([
 
-    print(
+    0.139361,     # C0
 
-        f"Current Error : {last_error}"
-    )
+    -0.021663,     # C1
 
-    print()
+    0.147010,     # A
 
-# =========================================
+    0.963081,      # Mc
+
+    20.289424,      # k
+])
+
+
+# =========================================================
+# Bounds
+# =========================================================
+
+bounds = [
+
+    (0.08, 0.20),     # C0
+
+    (-0.05, 0.05),    # C1
+
+    (0.00, 0.30),     # A
+
+    (0.80, 1.00),     # Mc
+
+    (1.0, 50.0),      # k
+]
+
+
+# =========================================================
 # Optimization
-# =========================================
+# =========================================================
 
 result = minimize(
 
     objective,
 
-    initial_guess,
+    x0,
 
     method="L-BFGS-B",
 
@@ -438,280 +511,309 @@ result = minimize(
 )
 
 
-# =========================================
-# Optimized Parameters
-# =========================================
+# =========================================================
+# Best Parameters
+# =========================================================
 
-global_delta_opt = result.x[:16]
+best_params = vector_to_params(
 
-A3_opt = result.x[16]
-
-A4_opt = result.x[17]
-
-A5_opt = result.x[18]
-
-A6_opt = result.x[19]
-
-
-# =========================================
-# Final Tables
-# =========================================
-
-cd_table_3 = build_charge_cd_table(
-
-    global_delta_opt,
-
-    A3_opt
-)
-
-cd_table_4 = build_charge_cd_table(
-
-    global_delta_opt,
-
-    A4_opt
-)
-
-cd_table_5 = build_charge_cd_table(
-
-    global_delta_opt,
-
-    A5_opt
-)
-
-cd_table_6 = build_charge_cd_table(
-
-    global_delta_opt,
-
-    A6_opt
+    result.x
 )
 
 
-# =========================================
-# Results
-# =========================================
+# =========================================================
+# Summary
+# =========================================================
 
-print("\n===== Optimization Result =====\n")
+print("\n================================================")
+print("OPTIMIZATION COMPLETE")
+print("================================================\n")
 
-print("A3 :", A3_opt)
+print(
 
-print("A4 :", A4_opt)
+    "SUCCESS :",
 
-print("A5 :", A5_opt)
+    result.success
+)
 
-print("A6 :", A6_opt)
+print(
 
-print()
+    "MESSAGE :",
 
-print("Total Error :", result.fun)
+    result.message
+)
 
-print()
+print(
+
+    "ITERATIONS :",
+
+    result.nit
+)
+
+print(
+
+    "FUNCTION EVALS :",
+
+    result.nfev
+)
+
+print(
+
+    f"\nFINAL LOSS : {result.fun:.8f}"
+)
 
 
-# =========================================
-# Validation
-# =========================================
+# =========================================================
+# Best Parameters
+# =========================================================
+
+print("\n================================================")
+print("BEST PARAMETERS")
+print("================================================\n")
+
+
+for key, value in best_params.items():
+
+    print(
+
+        f"{key:>4} : {value:.6f}"
+    )
+
+
+# =========================================================
+# Final Results
+# =========================================================
+
+print("\n================================================")
+print("FINAL CASE RESULTS")
+print("================================================")
+
 
 for case in cases:
 
-    charge_name = case["name"]
 
+    # =====================================================
+    # Nominal
+    # =====================================================
 
-    if charge_name == "charge_3":
+    reset_met()
 
-        cd_table = cd_table_3
+    nominal = simulate(
 
-    elif charge_name == "charge_4":
+        case["v0"],
 
-        cd_table = cd_table_4
+        case["theta_mil"],
 
-    elif charge_name == "charge_5":
-
-        cd_table = cd_table_5
-
-    else:
-
-        cd_table = cd_table_6
-
-
-    sim = simulate(
-
-        v0=case["v0"],
-
-        theta_mil=case["theta_mil"],
-
-        cd_table=cd_table
+        best_params
     )
 
 
-    print("====================================")
+    print("\n------------------------------------------------")
+    print(case["name"])
+    print("------------------------------------------------")
 
-    print(charge_name)
 
-    print("====================================")
+    # =====================================================
+    # Nominal
+    # =====================================================
+
+    print(
+
+        f"\nRange : "
+
+        f"{nominal['range']:.2f} "
+
+        f"(Target {case['range']:.2f})"
+    )
 
 
     print(
 
-        "Range :",
+        f"TOF : "
 
-        sim["range"],
+        f"{nominal['tof']:.2f} "
 
-        "| target:",
-
-        case["range"]
+        f"(Target {case['tof']:.2f})"
     )
+
 
     print(
 
-        "TOF :",
+        f"HMAX : "
 
-        sim["tof"],
+        f"{nominal['hmax']:.2f} "
 
-        "| target:",
-
-        case["tof"]
+        f"(Target {case['hmax']:.2f})"
     )
+
 
     print(
 
-        "Impact Angle :",
+        f"Impact Velocity : "
 
-        sim["impact_angle"],
+        f"{nominal['impact_velocity']:.2f} "
 
-        "| target:",
-
-        case["impact_angle"]
+        f"(Target {case['impact_velocity']:.2f})"
     )
+
 
     print(
 
-        "Impact Velocity :",
+        f"Impact Angle : "
 
-        sim["impact_velocity"],
+        f"{nominal['impact_angle']:.2f} "
 
-        "| target:",
-
-        case["impact_velocity"]
+        f"(Target {case['impact_angle']:.2f})"
     )
 
-    print(
 
-        "Hmax :",
+    # =====================================================
+    # Density Corrections
+    # =====================================================
 
-        sim["hmax"],
-
-        "| target:",
-
-        case["hmax"]
-    )
-
-    print()
+    if USE_DENSITY:
 
 
-# =========================================
-# Plot
-# =========================================
+        set_uniform_density_ratio(
 
-interp3 = PchipInterpolator(
+            1.01
+        )
 
-    mach_table,
+        rho_plus = simulate(
 
-    cd_table_3
-)
+            case["v0"],
 
-interp4 = PchipInterpolator(
+            case["theta_mil"],
 
-    mach_table,
-
-    cd_table_4
-)
-
-interp5 = PchipInterpolator(
-
-    mach_table,
-
-    cd_table_5
-)
-
-interp6 = PchipInterpolator(
-
-    mach_table,
-
-    cd_table_6
-)
+            best_params
+        )
 
 
-M_plot = np.linspace(
+        set_uniform_density_ratio(
 
-    0.0,
+            0.99
+        )
 
-    1.2,
+        rho_minus = simulate(
 
-    500
-)
+            case["v0"],
+
+            case["theta_mil"],
+
+            best_params
+        )
 
 
-plt.figure(figsize=(10,6))
+        reset_met()
 
-plt.plot(
 
-    M_plot,
+        delta_rho_plus = (
 
-    interp3(M_plot),
+            rho_plus["range"]
 
-    label="Charge 3"
-)
+            - nominal["range"]
+        )
 
-plt.plot(
 
-    M_plot,
+        delta_rho_minus = (
 
-    interp4(M_plot),
+            rho_minus["range"]
 
-    label="Charge 4"
-)
+            - nominal["range"]
+        )
 
-plt.plot(
 
-    M_plot,
+        print(
 
-    interp5(M_plot),
+            f"\nDensity +1% : "
 
-    label="Charge 5"
-)
+            f"{delta_rho_plus:.2f} "
 
-plt.plot(
+            f"(Target {case['density_plus']:.2f})"
+        )
 
-    M_plot,
 
-    interp6(M_plot),
+        print(
 
-    label="Charge 6"
-)
+            f"Density -1% : "
 
-plt.scatter(
+            f"{delta_rho_minus:.2f} "
 
-    mach_table,
+            f"(Target {case['density_minus']:.2f})"
+        )
 
-    base_cd_table,
 
-    color='black',
+    # =====================================================
+    # Temperature Corrections
+    # =====================================================
 
-    zorder=5,
+    if USE_TEMPERATURE:
 
-    label="Base Table"
-)
 
-plt.xlabel("Mach Number")
+        set_uniform_temp_ratio(
 
-plt.ylabel("Cd")
+            1.01
+        )
 
-plt.title("Optimized Charge-dependent Cd(M)")
+        temp_plus = simulate(
 
-plt.grid(True)
+            case["v0"],
 
-plt.legend()
+            case["theta_mil"],
 
-plt.savefig("optimized_cd_tables.png")
+            best_params
+        )
 
-plt.show()
+
+        set_uniform_temp_ratio(
+
+            0.99
+        )
+
+        temp_minus = simulate(
+
+            case["v0"],
+
+            case["theta_mil"],
+
+            best_params
+        )
+
+
+        reset_met()
+
+
+        delta_temp_plus = (
+
+            temp_plus["range"]
+
+            - nominal["range"]
+        )
+
+
+        delta_temp_minus = (
+
+            temp_minus["range"]
+
+            - nominal["range"]
+        )
+
+
+        print(
+
+            f"\nTemp +1% : "
+
+            f"{delta_temp_plus:.2f} "
+
+            f"(Target {case['temp_plus']:.2f})"
+        )
+
+
+        print(
+
+            f"Temp -1% : "
+
+            f"{delta_temp_minus:.2f} "
+
+            f"(Target {case['temp_minus']:.2f})"
+        )

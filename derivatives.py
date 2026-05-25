@@ -13,7 +13,7 @@ from atmosphere import (
 )
 
 
-def derivatives(state, interp):
+def derivatives(state, params):
 
     x, y, z, vx, vy, vz = state
 
@@ -38,7 +38,7 @@ def derivatives(state, interp):
 
     M = V / a
 
-    Cd = get_cd(M, interp)
+    Cd = get_cd(M, params)
 
     # =========================
     # Drag Magnitude

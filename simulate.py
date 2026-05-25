@@ -11,8 +11,6 @@ from units import (
     mil_to_rad,
 )
 
-from aero import build_cd_interp
-
 
 # =========================================
 # Simulation
@@ -24,16 +22,12 @@ def simulate(
 
     theta_mil,
 
-    cd_table,
-
-    return_trajectory=False
+    params
 ):
 
     # =====================================
     # Launch Angles
     # =====================================
-
-    interp = build_cd_interp(cd_table)
 
     theta = mil_to_rad(theta_mil)
 
@@ -74,7 +68,7 @@ def simulate(
     # Simulation Settings
     # =====================================
 
-    dt = 0.05
+    dt = 0.2
 
     time = 0.0
 
@@ -82,26 +76,10 @@ def simulate(
 
 
     # =====================================
-    # Trajectory Storage
-    # =====================================
-
-    trajectory = []
-
-
-    # =====================================
     # Simulation Loop
     # =====================================
 
     while state[2] >= 0:
-
-
-        # =================================
-        # Save Trajectory
-        # =================================
-
-        if return_trajectory:
-
-            trajectory.append(state.copy())
 
 
         # =================================
@@ -123,7 +101,12 @@ def simulate(
 
             dt,
 
-            lambda s: derivatives(s, interp)
+            lambda s: derivatives(
+
+                s,
+
+                params
+            )
         )
 
         time += dt
@@ -182,7 +165,7 @@ def simulate(
     # Result Dictionary
     # =====================================
 
-    result = {
+    return {
 
         "range": x_final,
 
@@ -192,17 +175,8 @@ def simulate(
 
         "impact_velocity": V_final,
 
-        "impact_angle": deg_to_mil(impact_angle)
+        "impact_angle": deg_to_mil(
+
+            impact_angle
+        )
     }
-
-
-    # =====================================
-    # Add Trajectory
-    # =====================================
-
-    if return_trajectory:
-
-        result["trajectory"] = np.array(trajectory)
-
-
-    return result

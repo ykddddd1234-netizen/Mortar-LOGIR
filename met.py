@@ -18,35 +18,87 @@ z_nodes = np.array([
 
 
 # =========================================
-# Density Ratios
+# Default MET Ratios
 # =========================================
 
-density_ratios = np.array([
+default_density_ratios = np.ones(7)
 
-    1.00,   # 00
-    1.00,   # 01
-    1.00,   # 02
-    1.00,   # 03
-    1.00,   # 04
-    1.00,   # 05
-    1.00    # 06
-])
+default_temp_ratios = np.ones(7)
 
 
 # =========================================
-# Temperature Ratios
+# Active MET Ratios
 # =========================================
 
-temp_ratios = np.array([
+density_ratios = default_density_ratios.copy()
 
-    1.00,   # 00
-    1.00,   # 01
-    1.00,   # 02
-    1.00,   # 03
-    1.00,   # 04
-    1.00,   # 05
-    1.00    # 06
-])
+temp_ratios = default_temp_ratios.copy()
+
+
+# =========================================
+# Set Density Ratios
+# =========================================
+
+def set_density_ratios(values):
+
+    global density_ratios
+
+    density_ratios[:] = values
+
+
+# =========================================
+# Set Temperature Ratios
+# =========================================
+
+def set_temp_ratios(values):
+
+    global temp_ratios
+
+    temp_ratios[:] = values
+
+
+# =========================================
+# Uniform Density Perturbation
+# =========================================
+
+def set_uniform_density_ratio(value):
+
+    global density_ratios
+
+    density_ratios[:] = value
+
+
+# =========================================
+# Uniform Temperature Perturbation
+# =========================================
+
+def set_uniform_temp_ratio(value):
+
+    global temp_ratios
+
+    temp_ratios[:] = value
+
+
+# =========================================
+# Reset MET
+# =========================================
+
+def reset_met():
+
+    global density_ratios
+
+    global temp_ratios
+
+
+    density_ratios[:] = (
+
+        default_density_ratios
+    )
+
+    temp_ratios[:] = (
+
+        default_temp_ratios
+    )
 
 
 # =========================================
@@ -55,17 +107,18 @@ temp_ratios = np.array([
 
 def get_met_ratios(z):
 
+
     # =====================================
     # Above Line 06
     # =====================================
 
-    if z > z_nodes[-1]:
+    if z >= z_nodes[-1]:
 
         return 1.0, 1.0
 
 
     # =====================================
-    # Interpolation
+    # Density Ratio
     # =====================================
 
     density_ratio = np.interp(
@@ -77,6 +130,11 @@ def get_met_ratios(z):
         density_ratios
     )
 
+
+    # =====================================
+    # Temperature Ratio
+    # =====================================
+
     temp_ratio = np.interp(
 
         z,
@@ -85,5 +143,6 @@ def get_met_ratios(z):
 
         temp_ratios
     )
+
 
     return density_ratio, temp_ratio
