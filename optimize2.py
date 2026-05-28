@@ -1,4 +1,4 @@
-# optimize.py
+# optimize2.py
 
 import numpy as np
 
@@ -10,30 +10,50 @@ from cases import cases
 
 
 # =========================================
+# Fixed Hump Parameters
+# =========================================
+
+FIXED = {
+
+    "A": 0.552486,
+
+    "M1": 0.942764,
+
+    "M2": 1.085635,
+
+    "k1": 149.999543,
+
+    "k2": 7.021692
+}
+
+
+# =========================================
 # Objective Function
 # =========================================
 
 def objective(x):
 
     # =====================================
-    # Parameters
+    # Parameters To Optimize
     # =====================================
 
     params = {
 
-        "C0": 0.142,
+        "C0": x[0],
 
-        "C1": -0.010,
+        "C1": x[1],
 
-        "A":  x[0],
+        "C2": x[2],
 
-        "M1": x[1],
+        "A": FIXED["A"],
 
-        "M2": x[2],
+        "M1": FIXED["M1"],
 
-        "k1": x[3],
+        "M2": FIXED["M2"],
 
-        "k2": x[4]
+        "k1": FIXED["k1"],
+
+        "k2": FIXED["k2"]
     }
 
 
@@ -49,6 +69,11 @@ def objective(x):
     # =====================================
 
     for case in cases:
+
+
+        # ---------------------------------
+        # Skip Disabled Cases
+        # ---------------------------------
 
         if not case.get("active", True):
 
@@ -74,36 +99,36 @@ def objective(x):
 
 
         # =================================
-        # Temperature +1%
+        # Density +1%
         # =================================
 
-        warm = run_case(
+        density_plus = run_case(
 
             v0=case["v0"],
 
             theta_mil=case["theta_mil"],
 
-            density_scale=1.0,
+            density_scale=1.01,
 
-            temp_scale=1.01,
+            temp_scale=1.0,
 
             params=params
         )
 
 
         # =================================
-        # Temperature -1%
+        # Density -1%
         # =================================
 
-        cold = run_case(
+        density_minus = run_case(
 
             v0=case["v0"],
 
             theta_mil=case["theta_mil"],
 
-            density_scale=1.0,
+            density_scale=0.99,
 
-            temp_scale=0.99,
+            temp_scale=1.0,
 
             params=params
         )
@@ -113,58 +138,125 @@ def objective(x):
         # Model Corrections
         # =================================
 
-        temp_plus_model = (
+        density_plus_model = (
 
-            warm["range"]
-
-            - nominal["range"]
-        )
-
-        temp_minus_model = (
-
-            cold["range"]
+            density_plus["range"]
 
             - nominal["range"]
         )
 
+        density_minus_model = (
+
+            density_minus["range"]
+
+            - nominal["range"]
+        )
+
 
         # =================================
-        # Residuals
-        # =================================
+        # Nominal Residuals
+        # =====================================
 
-        loss_temp_plus = (
+        loss_range = (
 
-            temp_plus_model
+            nominal["range"]
 
-            - case["temp_plus"]
+            - case["range"]
         )**2
 
 
-        loss_temp_minus = (
+        loss_tof = (
 
-            temp_minus_model
+            nominal["tof"]
 
-            - case["temp_minus"]
+            - case["tof"]
+        )**2
+
+
+        loss_hmax = (
+
+            nominal["hmax"]
+
+            - case["hmax"]
+        )**2
+
+
+        loss_impact_velocity = (
+
+            nominal["impact_velocity"]
+
+            - case["impact_velocity"]
+        )**2
+
+
+        loss_impact_angle = (
+
+            nominal["impact_angle"]
+
+            - case["impact_angle"]
         )**2
 
 
         # =================================
-        # Add To Total Loss
+        # Density Residuals
+        # =====================================
+
+        loss_density_plus = (
+
+            density_plus_model
+
+            - case["density_plus"]
+        )**2
+
+
+        loss_density_minus = (
+
+            density_minus_model
+
+            - case["density_minus"]
+        )**2
+
+
         # =================================
+        # Weighted Loss
+        # =====================================
 
-        total_loss += (
+        case_loss = (
 
-            loss_temp_plus
+            1.0 * loss_range
 
             +
 
-            loss_temp_minus
+            1.0 * loss_tof
+
+            +
+
+            0.01 * loss_hmax
+
+            +
+
+            0.5 * loss_impact_velocity
+
+            +
+
+            0.5 * loss_impact_angle
+
+            +
+
+            2.0 * loss_density_plus
+
+            +
+
+            2.0 * loss_density_minus
         )
+
+
+        total_loss += case_loss
 
 
         # =================================
         # Debug Print
-        # =================================
+        # =====================================
 
         print("\n----------------------------------------")
         print(case["name"])
@@ -174,32 +266,44 @@ def objective(x):
 
         print(
 
-            f"Observed Warm : "
-
-            f"{case['temp_plus']:.3f}"
+            f"Range Obs   : {case['range']:.2f}"
         )
 
         print(
 
-            f"Model Warm    : "
-
-            f"{temp_plus_model:.3f}"
+            f"Range Model : {nominal['range']:.2f}"
         )
 
         print()
 
         print(
 
-            f"Observed Cold : "
+            f"Density+ Obs   : "
 
-            f"{case['temp_minus']:.3f}"
+            f"{case['density_plus']:.2f}"
         )
 
         print(
 
-            f"Model Cold    : "
+            f"Density+ Model : "
 
-            f"{temp_minus_model:.3f}"
+            f"{density_plus_model:.2f}"
+        )
+
+        print()
+
+        print(
+
+            f"Density- Obs   : "
+
+            f"{case['density_minus']:.2f}"
+        )
+
+        print(
+
+            f"Density- Model : "
+
+            f"{density_minus_model:.2f}"
         )
 
         print()
@@ -217,15 +321,11 @@ def objective(x):
 
     print()
 
-    print(f"A  : {params['A']:.6f}")
+    print(f"C0 : {params['C0']:.6f}")
 
-    print(f"M1 : {params['M1']:.6f}")
+    print(f"C1 : {params['C1']:.6f}")
 
-    print(f"M2 : {params['M2']:.6f}")
-
-    print(f"k1 : {params['k1']:.6f}")
-
-    print(f"k2 : {params['k2']:.6f}")
+    print(f"C2 : {params['C2']:.6f}")
 
     print()
 
@@ -238,15 +338,11 @@ def objective(x):
 
 x0 = np.array([
 
-    0.55,
+    0.142,
 
-    0.943,
+    -0.01,
 
-    1.085,
-
-    150.0,
-
-    7.0
+    0.0
 ])
 
 
@@ -256,15 +352,11 @@ x0 = np.array([
 
 bounds = [
 
-    (0.1, 1.0),      # A
+    (0.05, 0.30),      # C0
 
-    (0.90, 0.98),    # M1
+    (-0.10, 0.05),      # C1
 
-    (1.00, 1.20),    # M2
-
-    (10.0, 300.0),   # k1
-
-    (1.0, 30.0)      # k2
+    (-0.10, 0.10)      # C2
 ]
 
 
@@ -284,7 +376,7 @@ result = minimize(
 
     options={
 
-        "maxiter": 20
+        "maxiter": 200
     }
 )
 
@@ -303,12 +395,8 @@ print()
 
 print("Optimized Parameters:\n")
 
-print(f"A  = {result.x[0]:.6f}")
+print(f"C0 = {result.x[0]:.6f}")
 
-print(f"M1 = {result.x[1]:.6f}")
+print(f"C1 = {result.x[1]:.6f}")
 
-print(f"M2 = {result.x[2]:.6f}")
-
-print(f"k1 = {result.x[3]:.6f}")
-
-print(f"k2 = {result.x[4]:.6f}")
+print(f"C2 = {result.x[2]:.6f}")

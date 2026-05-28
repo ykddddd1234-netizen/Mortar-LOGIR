@@ -4,73 +4,116 @@ import numpy as np
 
 
 # =========================================
-# Sigmoid
+# Baseline Cd
 # =========================================
 
-def sigmoid(
+def baseline_cd(
 
     M,
 
-    Mc,
-
-    k
+    params
 ):
 
-    return 1.0 / (
+    C0 = params["C0"]
 
-        1.0 + np.exp(
+    C1 = params["C1"]
 
-            -k * (M - Mc)
-        )
+    C2 = params["C2"]
+
+
+    return (
+
+        C0
+
+        +
+
+        C1 * M
+
+        +
+
+        C2 * M**2
     )
 
 
 # =========================================
-# Cd(M)
+# Hump Function
+# =========================================
+
+def hump(
+
+    M,
+
+    params
+):
+
+    A = params["A"]
+
+    M1 = params["M1"]
+
+    M2 = params["M2"]
+
+    k1 = params["k1"]
+
+    k2 = params["k2"]
+
+
+    rise = 1.0 / (
+
+        1.0
+
+        + np.exp(
+
+            -k1 * (M - M1)
+        )
+    )
+
+    fall = 1.0 / (
+
+        1.0
+
+        + np.exp(
+
+            k2 * (M - M2)
+        )
+    )
+
+
+    return (
+
+        A
+
+        * rise
+
+        * fall
+    )
+
+
+# =========================================
+# Total Cd
 # =========================================
 
 def get_cd(
 
     M,
 
-    a,
-
     params
 ):
 
-    # =====================================
-    # Parameters
-    # =====================================
+    return (
 
-    C0 = params["C0"]
+        baseline_cd(
 
-    C1 = params["C1"]
+            M,
 
-    A = params["A"]
+            params
+        )
 
+        +
 
-    # =====================================
-    # Subsonic Baseline
-    # =====================================
+        hump(
 
-    C_sub = (
+            M,
 
-        C0
-
-        + C1 * M
+            params
+        )
     )
-
-
-    # =====================================
-    # Final Cd
-    # =====================================
-
-    Cd = (
-
-        C_sub
-
-        + A * a
-    )
-
-
-    return Cd

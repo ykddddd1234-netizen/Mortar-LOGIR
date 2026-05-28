@@ -1,5 +1,3 @@
-# cases.py
-
 cases = [
 
     # =====================================================
@@ -7,14 +5,12 @@ cases = [
     # =====================================================
 
     {
+        "active": True,
+
         "name": "charge_3",
 
         "v0": 220.4,
         "theta_mil": 1504,
-
-        # -------------------------
-        # Nominal
-        # -------------------------
 
         "range": 700,
         "tof": 40.7,
@@ -24,18 +20,8 @@ cases = [
 
         "hmax": 2029,
 
-        # -------------------------
-        # Density Corrections
-        # (+1%, -1%)
-        # -------------------------
-
         "density_plus": -1.7,
         "density_minus": 1.7,
-
-        # -------------------------
-        # Temperature Corrections
-        # (+1%, -1%)
-        # -------------------------
 
         "temp_plus": 0.0,
         "temp_minus": 0.0
@@ -43,6 +29,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_3",
 
         "v0": 220.4,
@@ -65,6 +53,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_3",
 
         "v0": 220.4,
@@ -91,6 +81,8 @@ cases = [
     # =====================================================
 
     {
+        "active": True,
+
         "name": "charge_4",
 
         "v0": 262,
@@ -113,6 +105,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_4",
 
         "v0": 262,
@@ -135,6 +129,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_4",
 
         "v0": 262,
@@ -157,6 +153,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_4",
 
         "v0": 262,
@@ -179,6 +177,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_4",
 
         "v0": 262,
@@ -201,6 +201,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_4",
 
         "v0": 262,
@@ -227,6 +229,8 @@ cases = [
     # =====================================================
 
     {
+        "active": True,
+
         "name": "charge_5",
 
         "v0": 286,
@@ -249,6 +253,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_5",
 
         "v0": 286,
@@ -271,6 +277,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_5",
 
         "v0": 286,
@@ -293,6 +301,8 @@ cases = [
 
 
     {
+        "active": False,
+
         "name": "charge_5",
 
         "v0": 286,
@@ -319,6 +329,8 @@ cases = [
     # =====================================================
 
     {
+        "active": True,
+
         "name": "charge_6",
 
         "v0": 320,
@@ -341,6 +353,8 @@ cases = [
 
 
     {
+        "active": True,
+
         "name": "charge_6",
 
         "v0": 320,
@@ -363,6 +377,8 @@ cases = [
 
 
     {
+        "active": True,
+
         "name": "charge_6",
 
         "v0": 320,
@@ -385,6 +401,8 @@ cases = [
 
 
     {
+        "active": True,
+
         "name": "charge_6",
 
         "v0": 320,

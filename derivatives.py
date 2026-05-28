@@ -11,13 +11,6 @@ from constants import (
     m
 )
 
-from aero import (
-
-    get_cd,
-
-    sigmoid
-)
-
 from atmosphere import (
 
     get_density,
@@ -25,6 +18,12 @@ from atmosphere import (
     get_speed_of_sound
 )
 
+from aero import get_cd
+
+
+# =========================================
+# Derivatives
+# =========================================
 
 def derivatives(
 
@@ -37,7 +36,7 @@ def derivatives(
     # State
     # =====================================
 
-    x, y, z, vx, vy, vz, a = state
+    x, y, z, vx, vy, vz = state
 
 
     # =====================================
@@ -71,50 +70,12 @@ def derivatives(
 
 
     # =====================================
-    # Parameters
-    # =====================================
-
-    Mc = params["Mc"]
-
-    k = params["k"]
-
-    tau = params["tau"]
-
-
-    # =====================================
-    # Target Activation
-    # =====================================
-
-    S_target = sigmoid(
-
-        M,
-
-        Mc,
-
-        k
-    )
-
-
-    # =====================================
-    # Activation Dynamics
-    # =====================================
-
-    da_dt = (
-
-        S_target - a
-
-    ) / tau
-
-
-    # =====================================
-    # Drag Coefficient
+    # Cd
     # =====================================
 
     Cd = get_cd(
 
         M,
-
-        a,
 
         params
     )
@@ -160,6 +121,10 @@ def derivatives(
     az = Dz / m - g
 
 
+    # =====================================
+    # Return
+    # =====================================
+
     return np.array([
 
         vx,
@@ -172,7 +137,5 @@ def derivatives(
 
         ay,
 
-        az,
-
-        da_dt
+        az
     ])

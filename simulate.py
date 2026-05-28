@@ -2,192 +2,247 @@
 
 import numpy as np
 
-from rk4 import rk4_step
+import matplotlib.pyplot as plt
 
-from derivatives import derivatives
+from main import run_case
 
-from units import (
 
-    deg_to_mil,
+# =========================================
+# Optimized Parameters
+# =========================================
 
-    mil_to_rad
+params = {
+
+    "C0": 0.142,
+
+    "C1": -0.010,
+
+    "A": 0.552486,
+
+    "M1": 0.942764,
+
+    "M2": 1.085635,
+
+    "k1": 149.999543,
+
+    "k2": 7.021692
+}
+
+
+# =========================================
+# Simulation Settings
+# =========================================
+
+v0 = 320
+
+theta_mil = 1067
+
+
+# =========================================
+# Run Cases
+# =========================================
+
+nominal = run_case(
+
+    v0=v0,
+
+    theta_mil=theta_mil,
+
+    density_scale=1.0,
+
+    temp_scale=1.0,
+
+    params=params
+)
+
+warm = run_case(
+
+    v0=v0,
+
+    theta_mil=theta_mil,
+
+    density_scale=1.0,
+
+    temp_scale=1.01,
+
+    params=params
+)
+
+cold = run_case(
+
+    v0=v0,
+
+    theta_mil=theta_mil,
+
+    density_scale=1.0,
+
+    temp_scale=0.99,
+
+    params=params
 )
 
 
 # =========================================
-# Simulation
+# Corrections
 # =========================================
 
-def simulate(
+warm_corr = (
 
-    v0,
+    warm["range"]
 
-    theta_mil,
+    - nominal["range"]
+)
 
-    params
-):
+cold_corr = (
 
-    # =====================================
-    # Launch Angles
-    # =====================================
+    cold["range"]
 
-    theta = mil_to_rad(theta_mil)
+    - nominal["range"]
+)
 
-    psi_mil = 0
 
-    psi = mil_to_rad(psi_mil)
+# =========================================
+# Print Result
+# =========================================
 
+print("\n========================================")
+print("SIMULATION RESULT")
+print("========================================\n")
 
-    # =====================================
-    # Initial Velocity Components
-    # =====================================
+print(
 
-    vx0 = v0 * np.cos(theta) * np.cos(psi)
+    f"Nominal Range       : "
 
-    vy0 = v0 * np.cos(theta) * np.sin(psi)
+    f"{nominal['range']:.2f} m"
+)
 
-    vz0 = v0 * np.sin(theta)
+print(
 
+    f"Temp +1% Range      : "
 
-    # =====================================
-    # Initial Activation
-    # =====================================
+    f"{warm['range']:.2f} m"
+)
 
-    a0 = 0.0
+print(
 
+    f"Temp -1% Range      : "
 
-    # =====================================
-    # Initial State Vector
-    # [x, y, z, vx, vy, vz, a]
-    # =====================================
+    f"{cold['range']:.2f} m"
+)
 
-    state = np.array([
+print()
 
-        0.0,
-        0.0,
-        0.0,
+print(
 
-        vx0,
-        vy0,
-        vz0,
+    f"Temp +1% Correction : "
 
-        a0
-    ])
+    f"{warm_corr:.2f} m"
+)
 
+print(
 
-    # =====================================
-    # Simulation Settings
-    # =====================================
+    f"Temp -1% Correction : "
 
-    dt = 0.05
+    f"{cold_corr:.2f} m"
+)
 
-    time = 0.0
+print()
 
-    max_z = 0.0
+print(
 
+    f"|Cold| / |Warm|     : "
 
-    # =====================================
-    # Simulation Loop
-    # =====================================
+    f"{abs(cold_corr)/abs(warm_corr):.3f}"
+)
 
-    while state[2] >= 0:
 
+# =========================================
+# Plot
+# =========================================
 
-        # =================================
-        # Maximum Altitude
-        # =================================
+fig, ax = plt.subplots(
 
-        if state[2] > max_z:
+    figsize=(10, 6)
+)
 
-            max_z = state[2]
 
+# =========================================
+# Cd vs Mach
+# =========================================
 
-        # =================================
-        # RK4 Step
-        # =================================
+ax.plot(
 
-        state = rk4_step(
+    nominal["mach_history"],
 
-            state,
+    nominal["cd_history"],
 
-            dt,
+    label="Nominal"
+)
 
-            lambda s: derivatives(
+ax.plot(
 
-                s,
+    warm["mach_history"],
 
-                params
-            )
-        )
+    warm["cd_history"],
 
-        time += dt
+    label="Temp +1%"
+)
 
+ax.plot(
 
-    # =====================================
-    # Final State
-    # =====================================
+    cold["mach_history"],
 
-    x_final = state[0]
+    cold["cd_history"],
 
-    vx_final = state[3]
+    label="Temp -1%"
+)
 
-    vy_final = state[4]
 
-    vz_final = state[5]
+# =========================================
+# Labels
+# =========================================
 
+ax.set_xlabel("Mach")
 
-    # =====================================
-    # Final Velocity Magnitude
-    # =====================================
+ax.set_ylabel("Cd")
 
-    V_final = np.sqrt(
+ax.set_title("Transonic Drag Rise")
 
-        vx_final**2 +
 
-        vy_final**2 +
+# =========================================
+# Grid / Legend
+# =========================================
 
-        vz_final**2
-    )
+ax.grid(True)
 
+ax.legend()
 
-    # =====================================
-    # Impact Angle
-    # =====================================
 
-    V_horizontal = np.sqrt(
+# =========================================
+# Layout
+# =========================================
 
-        vx_final**2 +
+plt.tight_layout()
 
-        vy_final**2
-    )
 
-    impact_angle = np.degrees(
+# =========================================
+# Save
+# =========================================
 
-        np.arctan2(
+plt.savefig(
 
-            abs(vz_final),
+    "transonic_drag.png",
 
-            V_horizontal
-        )
-    )
+    dpi=300
+)
 
+print()
 
-    # =====================================
-    # Result Dictionary
-    # =====================================
+print("Saved : transonic_drag.png")
 
-    result = {
 
-        "range": x_final,
+# =========================================
+# Show
+# =========================================
 
-        "tof": time,
-
-        "hmax": max_z,
-
-        "impact_velocity": V_final,
-
-        "impact_angle": deg_to_mil(impact_angle)
-    }
-
-
-    return result
+plt.show()
