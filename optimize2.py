@@ -43,8 +43,6 @@ def objective(x):
 
         "C1": x[1],
 
-        "C2": x[2],
-
         "A": FIXED["A"],
 
         "M1": FIXED["M1"],
@@ -308,6 +306,76 @@ def objective(x):
 
         print()
 
+        range_residual = nominal["range"] - case["range"]
+
+        tof_residual = nominal["tof"] - case["tof"]
+
+        hmax_residual = nominal["hmax"] - case["hmax"]
+
+        impact_velocity_residual = (
+            nominal["impact_velocity"]
+            - case["impact_velocity"]
+        )
+
+        impact_angle_residual = (
+            nominal["impact_angle"]
+            - case["impact_angle"]
+        )
+
+        print("----- Residuals -----")
+
+        print(f"Range           : {range_residual:.3f}")
+
+        print(f"TOF             : {tof_residual:.3f}")
+
+        print(f"HMAX            : {hmax_residual:.3f}")
+
+        print(
+            f"Impact Velocity : "
+            f"{impact_velocity_residual:.3f}"
+        )
+
+        print(
+            f"Impact Angle    : "
+            f"{impact_angle_residual:.3f}"
+        )
+
+        print()
+
+        print("----- Loss Terms -----")
+
+        print(f"Range           : {loss_range:.3f}")
+
+        print(f"TOF             : {loss_tof:.3f}")
+
+        print(f"HMAX            : {loss_hmax:.3f}")
+
+        print(
+            f"Impact Velocity : "
+            f"{loss_impact_velocity:.3f}"
+        )
+
+        print(
+            f"Impact Angle    : "
+            f"{loss_impact_angle:.3f}"
+        )
+
+        print(
+            f"Density +       : "
+            f"{loss_density_plus:.3f}"
+        )
+
+        print(
+            f"Density -       : "
+            f"{loss_density_minus:.3f}"
+        )
+
+        print()
+
+        print(f"Case Loss       : {case_loss:.3f}")
+
+        print()
+
 
     # =====================================
     # Iteration Print
@@ -325,8 +393,6 @@ def objective(x):
 
     print(f"C1 : {params['C1']:.6f}")
 
-    print(f"C2 : {params['C2']:.6f}")
-
     print()
 
     return total_loss
@@ -338,11 +404,10 @@ def objective(x):
 
 x0 = np.array([
 
-    0.142,
+    0.138943,
 
-    -0.01,
+    -0.012977
 
-    0.0
 ])
 
 
@@ -355,8 +420,6 @@ bounds = [
     (0.05, 0.30),      # C0
 
     (-0.10, 0.05),      # C1
-
-    (-0.10, 0.10)      # C2
 ]
 
 
@@ -398,5 +461,3 @@ print("Optimized Parameters:\n")
 print(f"C0 = {result.x[0]:.6f}")
 
 print(f"C1 = {result.x[1]:.6f}")
-
-print(f"C2 = {result.x[2]:.6f}")
