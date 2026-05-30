@@ -18,6 +18,8 @@ def baseline_cd(
 
     C1 = params["C1"]
 
+    C2 = params["C2"]
+
     return (
 
         C0
@@ -25,6 +27,10 @@ def baseline_cd(
         +
 
         C1 * M
+
+        +
+
+        C2 * M**2
     )
 
 

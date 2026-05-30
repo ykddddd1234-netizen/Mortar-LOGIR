@@ -4,17 +4,19 @@ from cases import cases
 
 params = {
 
-    "C0": 0.138005,
+    "C0": 0.128794,
 
-    "C1": -0.013882,
+    "C1": -0.005527,
 
-    "A": 0.8,
+    "C2": 0.010791,
 
-    "M1": 0.948,
+    "A": 0.897430,
 
-    "M2": 1.085635,
+    "M1": 0.948035,
 
-    "k1": 277.0,
+    "M2": 1.1,
+
+    "k1": 300.0,
 
     "k2": 7.0
 }
@@ -216,18 +218,6 @@ mach = np.linspace(
     1000
 )
 
-
-# =====================================
-# Temperature Shift
-# =====================================
-
-mach_nominal = mach
-
-mach_warm = mach / 1.01
-
-mach_cold = mach / 0.99
-
-
 # =====================================
 # Cd Curves
 # =====================================
@@ -241,33 +231,8 @@ cd_nominal = [
         params
     )
 
-    for M in mach_nominal
+    for M in mach
 ]
-
-cd_warm = [
-
-    get_cd(
-
-        M,
-
-        params
-    )
-
-    for M in mach_warm
-]
-
-cd_cold = [
-
-    get_cd(
-
-        M,
-
-        params
-    )
-
-    for M in mach_cold
-]
-
 
 # =====================================
 # 320 m/s Mach
@@ -277,9 +242,23 @@ a0 = 340.0
 
 M320_nominal = 320.0 / a0
 
-M320_warm = 320.0 / (340.0 * 1.01)
+M320_warm = (
 
-M320_cold = 320.0 / (340.0 * 0.99)
+    320.0
+
+    /
+
+    (a0 * np.sqrt(1.01))
+)
+
+M320_cold = (
+
+    320.0
+
+    /
+
+    (a0 * np.sqrt(0.99))
+)
 
 
 print()
@@ -323,33 +302,6 @@ plt.plot(
 
     label="Nominal"
 )
-
-plt.plot(
-
-    mach,
-
-    cd_warm,
-
-    "--",
-
-    linewidth=2,
-
-    label="+1% Temp"
-)
-
-plt.plot(
-
-    mach,
-
-    cd_cold,
-
-    "--",
-
-    linewidth=2,
-
-    label="-1% Temp"
-)
-
 
 # -------------------------------------
 # 320 m/s Markers

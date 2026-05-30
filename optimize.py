@@ -21,19 +21,21 @@ def objective(x):
 
     params = {
 
-        "C0": 0.138005,
+        "C0": 0.128794,
 
-        "C1": -0.013882,
+        "C1": -0.005527,
+
+        "C2": 0.010791,
 
         "A":  x[0],
 
         "M1": x[1],
 
-        "M2": x[2],
+        "M2": 1.1,
 
-        "k1": x[3],
+        "k1": x[2],
 
-        "k2": x[4]
+        "k2": 7.0
     }
 
 
@@ -147,6 +149,32 @@ def objective(x):
             - case["temp_minus"]
         )**2
 
+        # =================================
+        # Ratio Constraint
+        # =================================
+
+        if abs(temp_plus_model) > 1e-6:
+
+            ratio_model = (
+
+                abs(temp_minus_model)
+
+                /
+
+                abs(temp_plus_model)
+            )
+
+            loss_ratio = (
+
+                ratio_model
+
+                - 3.0
+            )**2
+
+        else:
+
+            loss_ratio = 1000.0
+
 
         # =================================
         # Add To Total Loss
@@ -159,6 +187,10 @@ def objective(x):
             +
 
             loss_temp_minus
+
+            +
+
+            10.0 * loss_ratio
         )
 
 
@@ -221,11 +253,7 @@ def objective(x):
 
     print(f"M1 : {params['M1']:.6f}")
 
-    print(f"M2 : {params['M2']:.6f}")
-
     print(f"k1 : {params['k1']:.6f}")
-
-    print(f"k2 : {params['k2']:.6f}")
 
     print()
 
@@ -238,15 +266,11 @@ def objective(x):
 
 x0 = np.array([
 
-    0.8,
+    0.897430,
 
-    0.948,
+    0.948035,
 
-    1.085635,
-
-    277,
-
-    7.0
+    300
 ])
 
 
@@ -260,11 +284,7 @@ bounds = [
 
     (0.90, 0.98),    # M1
 
-    (1.00, 1.20),    # M2
-
     (10.0, 300.0),   # k1
-
-    (1.0, 30.0)      # k2
 ]
 
 
@@ -307,8 +327,4 @@ print(f"A  = {result.x[0]:.6f}")
 
 print(f"M1 = {result.x[1]:.6f}")
 
-print(f"M2 = {result.x[2]:.6f}")
-
 print(f"k1 = {result.x[3]:.6f}")
-
-print(f"k2 = {result.x[4]:.6f}")
