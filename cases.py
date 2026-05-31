@@ -5,7 +5,7 @@ cases = [
     # =====================================================
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_3",
 
@@ -29,7 +29,7 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_3",
 
@@ -53,7 +53,7 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_3",
 
@@ -81,11 +81,11 @@ cases = [
     # =====================================================
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_4",
 
-        "v0": 262,
+        "v0": 262.5,
         "theta_mil": 1506,
 
         "range": 900,
@@ -105,11 +105,11 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_4",
 
-        "v0": 262,
+        "v0": 262.5,
         "theta_mil": 1441,
 
         "range": 1500,
@@ -129,11 +129,11 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_4",
 
-        "v0": 262,
+        "v0": 262.5,
         "theta_mil": 1360,
 
         "range": 2200,
@@ -153,11 +153,11 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_4",
 
-        "v0": 262,
+        "v0": 262.5,
         "theta_mil": 1258,
 
         "range": 3000,
@@ -177,11 +177,11 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_4",
 
-        "v0": 262,
+        "v0": 262.5,
         "theta_mil": 1004,
 
         "range": 4400,
@@ -201,11 +201,11 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_4",
 
-        "v0": 262,
+        "v0": 262.5,
         "theta_mil": 846,
 
         "range": 4800,
@@ -229,7 +229,7 @@ cases = [
     # =====================================================
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_5",
 
@@ -253,7 +253,7 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_5",
 
@@ -277,7 +277,7 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_5",
 
@@ -301,7 +301,7 @@ cases = [
 
 
     {
-        "active": False,
+        "active": True,
 
         "name": "charge_5",
 
